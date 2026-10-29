@@ -1,0 +1,131 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1">
+
+  <meta name="theme-color" content="#035680">
+
+  <title>Moderação | Avalie o Atendimento</title>
+
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="index.html" class="brand">
+        <span class="brand-icon">★</span>
+        <span>
+          <strong>AVALIE O ATENDIMENTO</strong>
+          <small>Painel de moderação</small>
+        </span>
+      </a>
+
+      <nav class="topnav" aria-label="Navegação">
+        <a href="index.html">Avaliações</a>
+        <a href="dashboard.html">Dashboard</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="page-heading">
+      <div>
+        <span class="eyebrow">GESTÃO DE COMENTÁRIOS</span>
+        <h1>Moderação de avaliações</h1>
+        <p>
+          Consulte comentários e controle sua
+          visibilidade sem alterar as notas registradas.
+        </p>
+      </div>
+
+      <span id="modeBadge" class="mode-badge">
+        Verificando modo...
+      </span>
+    </section>
+
+    <section id="demoNotice" class="notice" hidden>
+      <strong>Ambiente de demonstração</strong>
+      <p>
+        Os comentários são armazenados apenas neste
+        navegador. Esta página não possui autenticação
+        e não deve ser publicada como painel protegido.
+      </p>
+    </section>
+
+    <section class="metrics" aria-label="Resumo">
+      <article class="metric">
+        <span>Comentários</span>
+        <strong id="totalComments">0</strong>
+      </article>
+
+      <article class="metric">
+        <span>Visíveis</span>
+        <strong id="visibleComments">0</strong>
+      </article>
+
+      <article class="metric">
+        <span>Ocultos</span>
+        <strong id="hiddenComments">0</strong>
+      </article>
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading">
+        <div>
+          <h2>Comentários recebidos</h2>
+          <p>Filtre por serviço e situação.</p>
+        </div>
+
+        <button
+          id="refreshButton"
+          class="refresh-button"
+          type="button"
+        >
+          Atualizar
+        </button>
+      </div>
+
+      <div class="filters">
+        <div class="field">
+          <label for="serviceFilter">Serviço</label>
+          <select id="serviceFilter">
+            <option value="all">Todos os serviços</option>
+            <option value="1">Secretaria</option>
+            <option value="2">Biblioteca</option>
+            <option value="3">Cantina</option>
+            <option value="4">Laboratórios</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="statusFilter">Situação</label>
+          <select id="statusFilter">
+            <option value="all">Todos</option>
+            <option value="visible">Visíveis</option>
+            <option value="hidden">Ocultos</option>
+          </select>
+        </div>
+      </div>
+
+      <p
+        id="adminMessage"
+        class="admin-message"
+        role="status"
+        aria-live="polite"
+      ></p>
+
+      <div id="commentsList" class="comments-list">
+        <p class="empty">Carregando comentários...</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/config.js" defer></script>
+  <script src="js/api.js" defer></script>
+  <script src="js/admin.js" defer></script>
+</body>
+</html>

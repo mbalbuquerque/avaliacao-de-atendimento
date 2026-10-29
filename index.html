@@ -2,25 +2,40 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#035680">
-<link rel="stylesheet" href="css/pwa.css">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Avalie o Atendimento</title>
 
+  <title>Avalie o Atendimento | SENAC</title>
+  <meta
+    name="description"
+    content="Avalie os serviços da instituição sem precisar se identificar."
+  >
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta
+    name="apple-mobile-web-app-status-bar-style"
+    content="default"
+  >
+  <meta name="theme-color" content="#035680">
+
+  <!-- ESTILOS -->
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/pwa.css">
 </head>
 
 <body>
+
+  <!-- CABEÇALHO -->
   <header class="topbar">
-    <a class="brand" href="#inicio">
-      <span class="brand-mark">★</span>
+    <a class="brand" href="#inicio" aria-label="Avalie o Atendimento">
+      <span class="brand-mark" aria-hidden="true">★</span>
+
       <span>
         Avalie<span class="brand-light">Atendimento</span>
         <small>Cloud Challenge • Grupo 1</small>
@@ -28,37 +43,50 @@
     </a>
 
     <nav aria-label="Principal">
-  <a href="#avaliar">Avaliar</a>
-  <a href="dashboard.html">Dashboard</a>
-</nav>
+      <a href="#avaliar">Avaliar</a>
+      <a href="dashboard.html">Dashboard</a>
+    </nav>
 
-<div class="pwa-actions">
-  <span id="connectionStatus" class="connection-status">
-    Conectado
-  </span>
+    <div class="pwa-actions">
+      <span id="connectionStatus" class="connection-status">
+        Conectado
+      </span>
 
-  <button
-    id="installApp"
-    class="install-button"
-    type="button"
-    hidden
-  >
-    Instalar aplicativo
-  </button>
-</div>
+      <button
+        id="installApp"
+        class="install-button"
+        type="button"
+        hidden
+      >
+        Instalar aplicativo
+      </button>
+    </div>
   </header>
 
   <main id="inicio">
+
+    <!-- APRESENTAÇÃO -->
     <section class="hero">
       <div>
-        <span class="eyebrow">SUA OPINIÃO FAZ A DIFERENÇA</span>
-        <h1>Um atendimento melhor começa com <em>você.</em></h1>
+        <span class="eyebrow">
+          SUA OPINIÃO FAZ A DIFERENÇA
+        </span>
+
+        <h1>
+          Um atendimento melhor começa com
+          <em>você.</em>
+        </h1>
+
         <p>
-          Avalie os serviços da nossa instituição de forma anônima.
-          Sua participação ajuda a transformar experiências em melhorias.
+          Avalie os serviços da nossa instituição
+          sem precisar se identificar.
+          Sua participação ajuda a transformar
+          experiências em melhorias.
         </p>
+
         <a class="btn primary" href="#avaliar">
-          Fazer avaliação <span aria-hidden="true">→</span>
+          Fazer avaliação
+          <span aria-hidden="true">→</span>
         </a>
       </div>
 
@@ -70,49 +98,91 @@
       </div>
     </section>
 
+    <!-- RESUMO -->
     <section class="stats" aria-label="Resumo">
       <article>
         <span>Avaliações registradas</span>
         <strong id="total">0</strong>
       </article>
+
       <article>
         <span>Serviços disponíveis</span>
         <strong id="serviceCount">4</strong>
       </article>
+
       <article>
         <span>Privacidade</span>
-        <strong>100% anônimo</strong>
+        <strong>Sem cadastro</strong>
       </article>
     </section>
 
     <section class="content-grid">
+
+      <!-- FORMULÁRIO -->
       <section class="panel" id="avaliar">
         <div class="section-heading">
           <span class="eyebrow">PARTICIPE</span>
           <h2>Avalie um serviço</h2>
-          <p>Leva menos de um minuto. Não solicitamos dados pessoais.</p>
+
+          <p>
+            Leva menos de um minuto.
+            Não solicitamos dados de identificação.
+          </p>
         </div>
 
         <form id="reviewForm">
-          
-<label for="service">Qual serviço deseja avaliar?</label>
 
-<select id="service" name="service" required>
-  <option value="">Selecione um serviço</option>
-  <option value="1">Secretaria</option>
-  <option value="2">Biblioteca</option>
-  <option value="3">Cantina</option>
-  <option value="4">Laboratórios</option>
-</select>
+          <label for="service">
+            Qual serviço deseja avaliar?
+          </label>
 
+          <select id="service" name="service" required>
+            <option value="">Selecione um serviço</option>
+            <option value="1">Secretaria</option>
+            <option value="2">Biblioteca</option>
+            <option value="3">Cantina</option>
+            <option value="4">Laboratórios</option>
+          </select>
 
-          <label>Como foi seu atendimento?</label>
-          <div class="stars" id="stars" role="group" aria-label="Nota de 1 a 5">
-            <button type="button" data-score="1" aria-label="1 estrela">★</button>
-            <button type="button" data-score="2" aria-label="2 estrelas">★</button>
-            <button type="button" data-score="3" aria-label="3 estrelas">★</button>
-            <button type="button" data-score="4" aria-label="4 estrelas">★</button>
-            <button type="button" data-score="5" aria-label="5 estrelas">★</button>
+          <label id="ratingLabel">
+            Como foi seu atendimento?
+          </label>
+
+          <div
+            class="stars"
+            id="stars"
+            role="group"
+            aria-labelledby="ratingLabel"
+          >
+            <button
+              type="button"
+              data-score="1"
+              aria-label="1 estrela"
+            >★</button>
+
+            <button
+              type="button"
+              data-score="2"
+              aria-label="2 estrelas"
+            >★</button>
+
+            <button
+              type="button"
+              data-score="3"
+              aria-label="3 estrelas"
+            >★</button>
+
+            <button
+              type="button"
+              data-score="4"
+              aria-label="4 estrelas"
+            >★</button>
+
+            <button
+              type="button"
+              data-score="5"
+              aria-label="5 estrelas"
+            >★</button>
           </div>
 
           <div class="rating-hint" id="ratingHint">
@@ -120,75 +190,100 @@
           </div>
 
           <label for="comment">
-            Comentário <span class="muted">(opcional)</span>
+            Comentário
+            <span class="muted">(opcional)</span>
           </label>
+
           <textarea
             id="comment"
+            name="comment"
             maxlength="280"
             rows="4"
             placeholder="Conte como foi sua experiência..."
           ></textarea>
 
           <div class="counter">
-            <span>Sem identificação pessoal</span>
+            <span>Não informe dados pessoais no comentário.</span>
             <span id="chars">0/280</span>
           </div>
 
-          <button class="btn primary full" type="submit">
+          <button
+            class="btn primary full"
+            type="submit"
+          >
             Enviar avaliação
           </button>
 
-          <p id="formMessage" class="message" role="status" aria-live="polite"></p>
+          <p
+            id="formMessage"
+            class="message"
+            role="status"
+            aria-live="polite"
+          ></p>
         </form>
       </section>
 
+      <!-- INDICADORES -->
       <section class="panel" id="painel">
         <div class="section-heading">
           <span class="eyebrow">TRANSPARÊNCIA</span>
           <h2>Painel por serviço</h2>
-          <p>Médias aparecem apenas a partir de três avaliações.</p>
+
+          <p>
+            Médias aparecem apenas a partir
+            de três avaliações.
+          </p>
         </div>
 
         <div id="services" class="service-list"></div>
       </section>
     </section>
 
+    <!-- COMENTÁRIOS PÚBLICOS -->
     <section class="panel comments-panel">
       <div class="section-heading">
         <span class="eyebrow">COMENTÁRIOS</span>
         <h2>Experiências compartilhadas</h2>
+
         <p>
-          Comentários públicos; avaliações ocultas continuam
-          contando nas estatísticas.
+          Comentários ocultados pela moderação
+          deixam de ser exibidos publicamente,
+          mas suas notas continuam nas estatísticas.
         </p>
       </div>
 
       <div id="comments" class="comments"></div>
     </section>
 
-    <section class="panel admin-panel">
-      <div class="section-heading">
-        <span class="eyebrow">MODERAÇÃO • DEMONSTRAÇÃO</span>
-        <h2>Moderação de comentários</h2>
-        <p>
-          Este painel é apenas uma simulação local, sem autenticação.
-          Na versão real, o acesso será restrito aos gestores e
-          controlado pelo backend.
-        </p>
-      </div>
-
-      <div id="moderation" class="moderation"></div>
-    </section>
   </main>
 
+  <!-- RODAPÉ -->
   <footer>
-    Grupo 1 · SENAC · Cloud Challenge 2026.2
-    <span>Equipe 1 / tema 13 Antônio Enzo, Emmanuel Luis, Everson, José AllanBerg, Marcelo Barbosa </span>
+    <div>
+      Grupo 1 · SENAC · Cloud Challenge 2026.2
+    </div>
+
+    <span>
+      Equipe 1 / Tema 13:
+      Antônio Enzo, Emmanuel Luis, Everson,
+      José AllanBerg e Marcelo Barbosa.
+    </span>
+
+    <div class="footer-admin">
+      <a
+        href="admin-login.html"
+        aria-label="Acessar área administrativa"
+      >
+        Área Administrativa
+      </a>
+    </div>
   </footer>
 
+  <!-- SCRIPTS -->
   <script src="js/config.js" defer></script>
-<script src="js/api.js" defer></script>
-<script src="js/script.js" defer></script>
-<script src="js/pwa.js" defer></script>
+  <script src="js/api.js" defer></script>
+  <script src="js/script.js" defer></script>
+  <script src="js/pwa.js" defer></script>
+
 </body>
 </html>

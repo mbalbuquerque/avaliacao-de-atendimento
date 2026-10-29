@@ -604,3 +604,32 @@ footer {
     flex-direction: column;
   }
 }
+
+/* ACESSO ADMINISTRATIVO NO RODAPÉ */
+
+.footer-admin {
+  margin-top: 14px;
+}
+
+.footer-admin a {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--navy);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+
+.footer-admin a:hover {
+  background: var(--navy);
+  color: #fff;
+}
+
+.footer-admin a:focus-visible {
+  outline: 3px solid var(--sky);
+  outline-offset: 3px;
+}

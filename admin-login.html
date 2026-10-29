@@ -1,0 +1,93 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#035680">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <title>Login Administrativo | Avalie o Atendimento</title>
+
+  <link rel="stylesheet" href="css/admin-login.css">
+</head>
+<body>
+  <main class="login-page">
+    <section class="login-card">
+      <a class="back-link" href="index.html">
+        ← Voltar ao início
+      </a>
+
+      <div class="brand">
+        <div class="brand-icon">★</div>
+        <span class="brand-name">AVALIE O ATENDIMENTO</span>
+        <span class="brand-subtitle">Cloud Challenge • Grupo 1</span>
+      </div>
+
+      <div class="login-heading">
+        <span class="eyebrow">ÁREA RESTRITA</span>
+        <h1>Acesso administrativo</h1>
+        <p>
+          Entre com suas credenciais para gerenciar
+          a moderação dos comentários.
+        </p>
+      </div>
+
+      <div id="demoNotice" class="demo-notice" hidden>
+        <strong>Ambiente de demonstração</strong>
+        <p>
+          O backend de autenticação ainda não está ativo.
+          O painel local não representa um acesso protegido.
+        </p>
+        <a href="admin.html" class="demo-link">
+          Abrir moderação demonstrativa
+        </a>
+      </div>
+
+      <form id="loginForm" class="login-form">
+        <div class="field">
+          <label for="username">Usuário</label>
+          <input
+            id="username"
+            name="username"
+            type="text"
+            autocomplete="username"
+            placeholder="Digite seu usuário"
+            required
+          >
+        </div>
+
+        <div class="field">
+          <label for="password">Senha</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            placeholder="Digite sua senha"
+            required
+          >
+        </div>
+
+        <p
+          id="loginMessage"
+          class="login-message"
+          role="status"
+          aria-live="polite"
+        ></p>
+
+        <button id="loginButton" type="submit">
+          Entrar no painel
+        </button>
+      </form>
+
+      <p class="login-footer">
+        Acesso exclusivo aos gestores autorizados.
+      </p>
+    </section>
+  </main>
+
+  <script src="js/config.js" defer></script>
+  <script src="js/admin-login.js" defer></script>
+</body>
+</html>
