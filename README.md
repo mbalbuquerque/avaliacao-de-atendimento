@@ -91,32 +91,47 @@ Desenvolver e disponibilizar uma aplicação web integrada a um banco de dados p
 
 ---
 
+
 ## 5. Arquitetura proposta
 
+A arquitetura do sistema **Avalie o Atendimento** utiliza uma
+aplicação web conectada a uma API, hospedada no Microsoft Azure,
+com persistência de dados no PostgreSQL.
 
+```mermaid
 flowchart TD
-    A["👥 ESTUDANTES / GESTORES<br/>Avaliações e consulta de indicadores"]
-    B["💻 FRONTEND WEB<br/>HTML, CSS e JavaScript"]
-    C["⚙️ BACKEND / API<br/>Validações e regras de negócio"]
-    D["☁️ AZURE APP SERVICE<br/>Hospedagem da aplicação"]
-    E[("🗄️ POSTGRESQL<br/>Banco de dados")]
-    F["📊 DADOS PERSISTENTES<br/>Avaliações, comentários e indicadores"]
+    A["ESTUDANTES / GESTORES"]
+    B["FRONTEND WEB"]
+    C["BACKEND / API"]
+    D["AZURE APP SERVICE"]
+    E[("POSTGRESQL")]
+    F["DADOS PERSISTENTES"]
 
     A --> B
     B --> C
-    C --> D
-    D --> E
+    C --- D
+    C --> E
     E --> F
 
-    classDef usuarios fill:#E8F5FC,stroke:#0482C2,color:#035680,stroke-width:2px;
-    classDef principal fill:#0482C2,stroke:#035680,color:#FFFFFF,stroke-width:2px;
-    classDef secundario fill:#E8F5FC,stroke:#0482C2,color:#035680,stroke-width:2px;
-    classDef dados fill:#DFF5E8,stroke:#17834B,color:#14532D,stroke-width:2px;
+    classDef usuarios fill:#E8F5FC,stroke:#0482C2,color:#035680,stroke-width:2px
+    classDef principal fill:#0482C2,stroke:#035680,color:#FFFFFF,stroke-width:2px
+    classDef secundario fill:#E8F5FC,stroke:#0482C2,color:#035680,stroke-width:2px
+    classDef dados fill:#DFF5E8,stroke:#17834B,color:#14532D,stroke-width:2px
 
-    class A usuarios;
-    class B,D principal;
-    class C,E secundario;
-    class F dados;
+    class A usuarios
+    class B,D principal
+    class C,E secundario
+    class F dados
+```
+
+### Componentes
+
+- **Estudantes e gestores:** usuários do sistema.
+- **Frontend Web:** interface HTML, CSS e JavaScript.
+- **Backend/API:** validações e regras de negócio.
+- **Azure App Service:** hospedagem da aplicação.
+- **PostgreSQL:** armazenamento das avaliações.
+- **Dados persistentes:** histórico de avaliações e comentários.
 
 
 ### Tecnologias previstas
