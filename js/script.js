@@ -1,13 +1,14 @@
 
 /*
-  AVALIE O ATENDIMENTO
-  Cloud Challenge - Grupo 1
-
-  PROTÓTIPO FRONTEND
-
-  Os dados são armazenados no localStorage.
-  Isso NÃO representa persistência em nuvem.
-*/
+ * AVALIE O ATENDIMENTO
+ * Cloud Challenge — Grupo 1
+ *
+ * Frontend preparado para:
+ * - Modo DEMO: localStorage
+ * - Modo API: backend + PostgreSQL
+ *
+ * As avaliações são anônimas.
+ */
 
 const SERVICES = [
   { id: 1, name: "Secretaria" },
@@ -18,94 +19,288 @@ const SERVICES = [
 
 const KEY = "cloud-challenge-avaliacoes-demo-v1";
 
-let reviews = [];
+const CONFIG = window.APP_CONFIG || {
+  mode: "demo",
+  apiBaseUrl: "/api",
+  requestTimeout: 10000
+};
 
-try {
-  const parsed = JSON.parse(localStorage.getItem(KEY) || "[]");
-  reviews = Array.isArray(parsed) ? parsed : [];
-} catch {
-  reviews = [];
-}
-
-let score = 0;
+const API_MODE = CONFIG.mode === "api";
 
 const $ = id => document.getElementById(id);
 
-/* PROTEÇÃO NA EXIBIÇÃO DE COMENTÁRIOS */
+let reviews = [];
+let indicators = [];
+let publicComments = [];
+let score = 0;
+let sending = false;
 
-const safe = value => String(value).replace(
-  /[&<>"']/g,
-  char => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
-  }[char])
-);
+/* ==================================================
+   UTILITÁRIOS
+================================================== */
 
-/* ARMAZENAMENTO LOCAL */
+function safe(value) {
+  return String(value ?? "").replace(
+    /[&<>"']/g,
+    char => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    }[char])
+  );
+}
 
-function save() {
+function showMessage(text, type = "error") {
+  const element = $("formMessage");
+  if (!element) return;
+
+  element.textContent = text;
+  element.className = `message ${type}`;
+  element.setAttribute("role", "status");
+}
+
+function formatAverage(value) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  const number = Number(value);
+
+  return Number.isFinite(number)
+    ? number.toFixed(1).replace(".", ",")
+    : null;
+}
+
+function getServiceName(id) {
+  return SERVICES.find(
+    service => service.id === Number(id)
+  )?.name || "Serviço";
+}
+
+function setSending(active) {
+  sending = active;
+
+  const button = document.querySelector(
+    '#reviewForm button[type="submit"]'
+  );
+
+  if (!button) return;
+
+  if (!button.dataset.originalText) {
+    button.dataset.originalText = button.textContent;
+  }
+
+  button.disabled = active;
+  button.setAttribute("aria-busy", String(active));
+
+  button.textContent = active
+    ? "Enviando avaliação..."
+    : button.dataset.originalText;
+}
+
+/* ==================================================
+   MODO DEMONSTRAÇÃO
+================================================== */
+
+function loadLocalReviews() {
+  try {
+    const parsed = JSON.parse(
+      localStorage.getItem(KEY) || "[]"
+    );
+
+    reviews = Array.isArray(parsed)
+      ? parsed.filter(item =>
+          SERVICES.some(
+            service => service.id === Number(item.serviceId)
+          ) &&
+          Number.isInteger(item.score) &&
+          item.score >= 1 &&
+          item.score <= 5 &&
+          typeof item.comment === "string"
+        )
+      : [];
+
+  } catch (error) {
+    console.error(
+      "Erro ao ler avaliações locais:",
+      error
+    );
+
+    reviews = [];
+  }
+}
+
+function saveLocalReviews() {
   localStorage.setItem(KEY, JSON.stringify(reviews));
 }
 
-/* SELEÇÃO DE ESTRELAS */
+/* ==================================================
+   ESTRELAS
+================================================== */
 
 function drawStars() {
-  document.querySelectorAll("[data-score]").forEach(button => {
-    const active = Number(button.dataset.score) <= score;
+  document.querySelectorAll("[data-score]").forEach(
+    button => {
+      const value = Number(button.dataset.score);
+      const active = value <= score;
 
-    button.classList.toggle("active", active);
+      button.classList.toggle("active", active);
 
-    button.setAttribute(
-      "aria-pressed",
-      String(Number(button.dataset.score) === score)
-    );
-  });
+      button.setAttribute(
+        "aria-pressed",
+        String(value === score)
+      );
+    }
+  );
 
-  $("ratingHint").textContent = score
-    ? `Nota selecionada: ${score} de 5`
-    : "Selecione de 1 a 5 estrelas";
+  if ($("ratingHint")) {
+    $("ratingHint").textContent = score
+      ? `Nota selecionada: ${score} de 5`
+      : "Selecione de 1 a 5 estrelas";
+  }
 }
 
-/* ATUALIZAÇÃO DOS PAINÉIS */
+document.querySelectorAll("[data-score]").forEach(
+  button => {
+    button.addEventListener("click", () => {
+      if (sending) return;
 
-function render() {
-  $("total").textContent = reviews.length;
-  $("serviceCount").textContent = SERVICES.length;
+      score = Number(button.dataset.score);
+      drawStars();
+    });
+  }
+);
 
-  /* INDICADORES POR SERVIÇO */
+/* ==================================================
+   CONTADOR DE CARACTERES
+================================================== */
 
-  $("services").innerHTML = SERVICES.map(service => {
-    const serviceReviews = reviews.filter(
+if ($("comment")) {
+  $("comment").addEventListener("input", () => {
+    $("chars").textContent =
+      `${$("comment").value.length}/280`;
+  });
+}
+
+/* ==================================================
+   INDICADORES DEMONSTRATIVOS
+================================================== */
+
+function calculateLocalIndicators() {
+  return SERVICES.map(service => {
+    const items = reviews.filter(
       item => item.serviceId === service.id
     );
 
-    const count = serviceReviews.length;
+    const count = items.length;
 
-    const average = count >= 3
-      ? (
-          serviceReviews.reduce(
-            (sum, item) => sum + item.score,
-            0
-          ) / count
-        ).toFixed(1).replace(".", ",")
+    const sum = items.reduce(
+      (total, item) => total + item.score,
+      0
+    );
+
+    const distribution = {};
+
+    for (let note = 1; note <= 5; note++) {
+      distribution[String(note)] = items.filter(
+        item => item.score === note
+      ).length;
+    }
+
+    return {
+      servico_id: service.id,
+      nome: service.name,
+      quantidade: count,
+      media: count >= 3 ? sum / count : null,
+      amostra_suficiente: count >= 3,
+      distribuicao: distribution
+    };
+  });
+}
+
+/* ==================================================
+   NORMALIZAÇÃO DE INDICADORES
+================================================== */
+
+function normalizeIndicators(data) {
+  if (!Array.isArray(data)) {
+    throw new Error(
+      "Formato de indicadores inválido."
+    );
+  }
+
+  return SERVICES.map(service => {
+    const item = data.find(
+      entry => Number(entry.servico_id) === service.id
+    );
+
+    const count = Number(item?.quantidade ?? 0);
+
+    const distribution = {};
+
+    for (let note = 1; note <= 5; note++) {
+      distribution[String(note)] = Number(
+        item?.distribuicao?.[String(note)] ?? 0
+      );
+    }
+
+    return {
+      servico_id: service.id,
+      nome: service.name,
+      quantidade: count,
+      media: count >= 3 && item?.amostra_suficiente === true
+        ? item.media
+        : null,
+      amostra_suficiente:
+        count >= 3 && item?.amostra_suficiente === true,
+      distribuicao: distribution
+    };
+  });
+}
+
+/* ==================================================
+   RENDERIZAÇÃO DOS INDICADORES
+================================================== */
+
+function renderIndicators() {
+  const data = API_MODE
+    ? indicators
+    : calculateLocalIndicators();
+
+  if ($("total")) {
+    $("total").textContent = data.reduce(
+      (total, item) => total + item.quantidade,
+      0
+    );
+  }
+
+  if ($("serviceCount")) {
+    $("serviceCount").textContent = SERVICES.length;
+  }
+
+  if (!$("services")) return;
+
+  $("services").innerHTML = data.map(service => {
+    const count = service.quantidade;
+
+    const average = service.amostra_suficiente
+      ? formatAverage(service.media)
       : null;
 
     const counts = [1, 2, 3, 4, 5].map(
-      value => serviceReviews.filter(
-        item => item.score === value
-      ).length
+      note => service.distribuicao[String(note)] || 0
     );
 
     return `
       <article class="service-card">
         <div class="service-top">
           <div>
-            <strong>${service.name}</strong>
+            <strong>${safe(service.nome)}</strong>
             <small>
-              ${count} ${count === 1 ? "avaliação" : "avaliações"}
+              ${count}
+              ${count === 1 ? "avaliação" : "avaliações"}
             </small>
           </div>
 
@@ -122,7 +317,9 @@ function render() {
         >
           ${counts.map(value => `
             <span>
-              <i style="width:${count ? value / count * 100 : 0}%"></i>
+              <i style="width:${
+                count ? value / count * 100 : 0
+              }%"></i>
             </span>
           `).join("")}
         </div>
@@ -136,50 +333,85 @@ function render() {
       </article>
     `;
   }).join("");
+}
 
-  /* COMENTÁRIOS PÚBLICOS */
+/* ==================================================
+   COMENTÁRIOS PÚBLICOS
+================================================== */
 
-  const visible = reviews
-    .filter(item => !item.hidden && item.comment.trim())
-    .slice()
-    .reverse();
+function renderComments() {
+  if (!$("comments")) return;
+
+  const visible = API_MODE
+    ? publicComments
+    : reviews
+        .filter(item =>
+          !item.hidden && item.comment.trim()
+        )
+        .slice()
+        .reverse()
+        .map(item => ({
+          id: item.id,
+          servico: getServiceName(item.serviceId),
+          nota: item.score,
+          comentario: item.comment
+        }));
 
   $("comments").innerHTML = visible.length
-    ? visible.map(item => `
-        <article class="comment-item">
-          <header>
-            <span>
-              ${
-                SERVICES.find(
-                  service => service.id === item.serviceId
-                )?.name || "Serviço"
-              }
-            </span>
-            <span>${"★".repeat(item.score)}</span>
-          </header>
+    ? visible.map(item => {
+        const stars = Number.isInteger(Number(item.nota))
+          ? "★".repeat(
+              Math.max(0, Math.min(5, Number(item.nota)))
+            )
+          : "";
 
-          <p>${safe(item.comment)}</p>
-        </article>
-      `).join("")
+        return `
+          <article class="comment-item">
+            <header>
+              <span>${safe(item.servico)}</span>
+              <span>${stars}</span>
+            </header>
+
+            <p>${safe(item.comentario)}</p>
+          </article>
+        `;
+      }).join("")
     : '<p class="empty">Nenhum comentário público registrado ainda.</p>';
+}
 
-  /* MODERAÇÃO DEMONSTRATIVA */
+/* ==================================================
+   MODERAÇÃO LOCAL — SOMENTE DEMONSTRAÇÃO
+================================================== */
+
+function renderModeration() {
+  const container = $("moderation");
+
+  if (!container) return;
+
+  if (API_MODE) {
+    const panel = container.closest(".admin-panel");
+
+    if (panel) {
+      panel.hidden = true;
+    } else {
+      container.textContent =
+        "Moderação disponível apenas na área administrativa.";
+    }
+
+    return;
+  }
 
   const withComments = reviews
     .filter(item => item.comment.trim())
     .slice()
     .reverse();
 
-  $("moderation").innerHTML = withComments.length
+  container.innerHTML = withComments.length
     ? withComments.map(item => `
         <article class="comment-item">
           <header>
             <span>
-              ${
-                SERVICES.find(
-                  service => service.id === item.serviceId
-                )?.name || "Serviço"
-              }
+              ${safe(getServiceName(item.serviceId))}
               · ${item.hidden ? "Oculto" : "Visível"}
             </span>
 
@@ -196,94 +428,259 @@ function render() {
       `).join("")
     : '<p class="empty">Nenhum comentário para moderar.</p>';
 
-  /* BOTÕES DE MODERAÇÃO */
+  container.querySelectorAll("[data-toggle]").forEach(
+    button => {
+      button.addEventListener("click", () => {
+        const item = reviews.find(
+          review => review.id === button.dataset.toggle
+        );
 
-  document.querySelectorAll("[data-toggle]").forEach(button => {
-    button.addEventListener("click", () => {
-      const item = reviews.find(
-        review => review.id === button.dataset.toggle
-      );
+        if (!item) return;
 
-      if (item) {
         item.hidden = !item.hidden;
-        save();
+
+        saveLocalReviews();
         render();
-      }
-    });
-  });
+      });
+    }
+  );
 }
 
+/* ==================================================
+   RENDERIZAÇÃO GERAL
+================================================== */
 
+function render() {
+  renderIndicators();
+  renderComments();
+  renderModeration();
+}
 
-/* EVENTOS DAS ESTRELAS */
+/* ==================================================
+   CARREGAMENTO DA API
+================================================== */
 
-document.querySelectorAll("[data-score]").forEach(button => {
-  button.addEventListener("click", () => {
-    score = Number(button.dataset.score);
-    drawStars();
-  });
-});
+async function loadAPIData() {
+  if (
+    typeof AvalieAPI === "undefined" ||
+    !AvalieAPI.buscarIndicadores ||
+    !AvalieAPI.listarComentarios
+  ) {
+    throw new Error(
+      "A camada de integração com a API não foi carregada."
+    );
+  }
 
-/* CONTADOR DE CARACTERES */
+  const [indicatorData, commentData] = await Promise.all([
+    AvalieAPI.buscarIndicadores(),
+    AvalieAPI.listarComentarios()
+  ]);
 
-$("comment").addEventListener("input", () => {
-  $("chars").textContent = `${$("comment").value.length}/280`;
-});
+  if (!Array.isArray(commentData)) {
+    throw new Error(
+      "Formato de comentários inválido."
+    );
+  }
 
-/* ENVIO DA AVALIAÇÃO */
+  indicators = normalizeIndicators(indicatorData);
 
-$("reviewForm").addEventListener("submit", event => {
-  event.preventDefault();
+  publicComments = commentData.filter(
+    item =>
+      typeof item.comentario === "string" &&
+      item.comentario.trim()
+  );
 
-  const serviceId = Number($("service").value);
-  const comment = $("comment").value.trim();
-  const message = $("formMessage");
+  render();
+}
 
-  message.className = "message";
+/* ==================================================
+   VALIDAÇÃO DO FORMULÁRIO
+================================================== */
 
+function validateReview(serviceId, comment) {
   const validService = SERVICES.some(
     service => service.id === serviceId
   );
 
-  const validScore =
-    Number.isInteger(score) &&
-    score >= 1 &&
-    score <= 5;
+  if (!validService) {
+    return "Selecione um serviço válido.";
+  }
 
-  if (!validService || !validScore || comment.length > 280) {
-    message.textContent =
-      "Selecione um serviço e uma nota válida de 1 a 5.";
+  if (
+    !Number.isInteger(score) ||
+    score < 1 ||
+    score > 5
+  ) {
+    return "Selecione uma nota de 1 a 5 estrelas.";
+  }
 
-    message.classList.add("error");
+  if (comment.length > 280) {
+    return "O comentário deve ter no máximo 280 caracteres.";
+  }
+
+  return null;
+}
+
+/* ==================================================
+   ENVIO DA AVALIAÇÃO
+================================================== */
+
+async function submitReview(event) {
+  event.preventDefault();
+
+  if (sending) return;
+
+  const serviceId = Number($("service").value);
+  const comment = $("comment").value.trim();
+
+  const validationError = validateReview(
+    serviceId,
+    comment
+  );
+
+  if (validationError) {
+    showMessage(validationError);
     return;
   }
 
-  reviews.push({
-    id: crypto.randomUUID(),
-    serviceId,
-    score,
-    comment,
-    hidden: false,
-    createdAt: new Date().toISOString()
-  });
+  if (API_MODE && !navigator.onLine) {
+    showMessage(
+      "Você está offline. Conecte-se à internet para enviar sua avaliação."
+    );
+    return;
+  }
 
-  save();
-  render();
+  setSending(true);
 
-  $("reviewForm").reset();
+  try {
+    if (API_MODE) {
+      if (
+        typeof AvalieAPI === "undefined" ||
+        !AvalieAPI.enviarAvaliacao
+      ) {
+        throw new Error(
+          "Serviço de avaliação indisponível."
+        );
+      }
 
-  score = 0;
+      await AvalieAPI.enviarAvaliacao({
+        servico_id: serviceId,
+        nota: score,
+        comentario: comment
+      });
+
+      // A API confirmou o registro.
+      // Não reenviar caso a atualização dos gráficos falhe.
+      $("reviewForm").reset();
+      score = 0;
+      drawStars();
+
+      if ($("chars")) {
+        $("chars").textContent = "0/280";
+      }
+
+      showMessage(
+        "Avaliação recebida pelo servidor com sucesso!",
+        "ok"
+      );
+
+      try {
+        await loadAPIData();
+      } catch (refreshError) {
+        console.error(
+          "Falha ao atualizar os indicadores:",
+          refreshError
+        );
+
+        showMessage(
+          "Avaliação registrada! Os indicadores não puderam ser atualizados agora.",
+          "ok"
+        );
+      }
+
+    } else {
+      reviews.push({
+        id: crypto.randomUUID(),
+        serviceId,
+        score,
+        comment,
+        hidden: false,
+        createdAt: new Date().toISOString()
+      });
+
+      saveLocalReviews();
+      render();
+
+      $("reviewForm").reset();
+
+      score = 0;
+      drawStars();
+
+      if ($("chars")) {
+        $("chars").textContent = "0/280";
+      }
+
+      showMessage(
+        "Avaliação registrada nesta demonstração local!",
+        "ok"
+      );
+    }
+
+  } catch (error) {
+    console.error(
+      "Erro ao registrar avaliação:",
+      error
+    );
+
+    showMessage(
+      error.message ||
+      "Não foi possível registrar a avaliação."
+    );
+
+  } finally {
+    setSending(false);
+  }
+}
+
+/* ==================================================
+   INICIALIZAÇÃO
+================================================== */
+
+async function initialize() {
   drawStars();
 
-  $("chars").textContent = "0/280";
+  if (API_MODE) {
+    // Não apresentar dados antigos do localStorage
+    // como se fossem registros reais da API.
+    indicators = normalizeIndicators([]);
+    publicComments = [];
 
-  message.textContent =
-    "Avaliação registrada nesta demonstração local!";
+    render();
 
-  message.classList.add("ok");
-});
+    try {
+      await loadAPIData();
+    } catch (error) {
+      console.error(
+        "Erro ao carregar dados da API:",
+        error
+      );
 
-/* INICIALIZAÇÃO */
+      showMessage(
+        "Não foi possível carregar os dados do servidor."
+      );
+    }
 
-drawStars();
-render();
+  } else {
+    loadLocalReviews();
+    render();
+  }
+}
+
+if ($("reviewForm")) {
+  $("reviewForm").addEventListener(
+    "submit",
+    submitReview
+  );
+}
+
+initialize();
