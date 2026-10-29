@@ -1,0 +1,186 @@
+
+:root {
+  --pwa-blue: #0482C2;
+  --pwa-dark: #035680;
+  --pwa-sky: #05ACFF;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-width: 320px;
+}
+
+button,
+a,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+select {
+  touch-action: manipulation;
+}
+
+button:focus-visible,
+a:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--pwa-sky);
+  outline-offset: 3px;
+}
+
+.pwa-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.install-button {
+  border: 1px solid #B5DFF4;
+  background: #E9F7FF;
+  color: var(--pwa-dark);
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.install-button[hidden] {
+  display: none;
+}
+
+.connection-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #17754D;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.connection-status::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #20A46B;
+}
+
+.connection-status.offline {
+  color: #B34829;
+}
+
+.connection-status.offline::before {
+  background: #E36A43;
+}
+
+@media (max-width: 768px) {
+  .topbar {
+    height: auto;
+    min-height: 72px;
+    padding: 14px 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .topbar nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+
+  main {
+    width: 100%;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .hero {
+    padding: 32px 24px;
+  }
+
+  .hero h1 {
+    font-size: clamp(29px, 7vw, 42px);
+  }
+
+  .content-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stats article {
+    min-width: 0;
+  }
+
+  .panel {
+    padding: 22px 18px;
+  }
+
+  select,
+  textarea,
+  input {
+    font-size: 16px;
+  }
+
+  .stars button {
+    min-width: 44px;
+    min-height: 48px;
+  }
+
+  .btn.full {
+    min-height: 50px;
+  }
+
+  .service-top {
+    flex-wrap: wrap;
+  }
+
+  .pwa-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 380px) {
+  .stats {
+    grid-template-columns: 1fr;
+  }
+
+  .stats article:last-child {
+    grid-column: auto;
+  }
+
+  .hero {
+    padding: 28px 19px;
+  }
+
+  .panel {
+    padding: 20px 15px;
+  }
+
+  .stars {
+    gap: 2px;
+  }
+
+  .stars button {
+    font-size: 31px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}

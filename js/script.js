@@ -213,16 +213,7 @@ function render() {
   });
 }
 
-/* CARREGAR SERVIÇOS NO SELECT */
 
-$("service").insertAdjacentHTML(
-  "beforeend",
-  SERVICES.map(service => `
-    <option value="${service.id}">
-      ${service.name}
-    </option>
-  `).join("")
-);
 
 /* EVENTOS DAS ESTRELAS */
 

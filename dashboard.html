@@ -1,0 +1,148 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard | Avalie o Atendimento</title>
+
+  <link rel="stylesheet" href="css/dashboard.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js" defer></script>
+  <script src="js/dashboard.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html">
+      <span class="brand-icon">★</span>
+      <span>Avalie <b>Atendimento</b></span>
+    </a>
+
+    <nav>
+      <a href="index.html">Fazer avaliação</a>
+      <a href="dashboard.html" class="active">Dashboard</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="page-heading">
+      <div>
+        <span class="eyebrow">CLOUD CHALLENGE · GRUPO 1</span>
+        <h1>Painel de Avaliações</h1>
+        <p>
+          Acompanhe a satisfação dos estudantes por setor,
+          com indicadores e gráficos atualizados.
+        </p>
+      </div>
+
+      <div class="heading-actions">
+        <button id="refreshButton" type="button">
+          ↻ Atualizar dados
+        </button>
+      </div>
+    </section>
+
+    <div class="demo-notice" id="dataSourceNotice">
+      Dados locais de demonstração. Integração com a API pendente.
+    </div>
+
+    <section class="metrics">
+      <article class="metric">
+        <span>Total de avaliações</span>
+        <strong id="totalReviews">0</strong>
+        <small>Registros recebidos</small>
+      </article>
+
+      <article class="metric">
+        <span>Setores avaliados</span>
+        <strong id="totalServices">4</strong>
+        <small>Serviços cadastrados</small>
+      </article>
+
+      <article class="metric">
+        <span>Setores com amostra válida</span>
+        <strong id="validServices">0</strong>
+        <small>Mínimo de 3 avaliações</small>
+      </article>
+
+      <article class="metric">
+        <span>Média geral</span>
+        <strong id="generalAverage">—</strong>
+        <small>Somente quando houver amostra suficiente</small>
+      </article>
+    </section>
+
+    <section class="filters">
+      <div>
+        <label for="serviceFilter">Filtrar por setor</label>
+        <select id="serviceFilter">
+          <option value="all">Todos os setores</option>
+          <option value="1">Secretaria</option>
+          <option value="2">Biblioteca</option>
+          <option value="3">Cantina</option>
+          <option value="4">Laboratórios</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="chart-grid">
+      <article class="panel chart-wide">
+        <div class="panel-heading">
+          <h2>Média das avaliações por setor</h2>
+          <p>Escala de 1 a 5 estrelas</p>
+        </div>
+        <div class="chart-area">
+          <canvas id="averageChart"></canvas>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-heading">
+          <h2>Quantidade de avaliações</h2>
+          <p>Participação por setor</p>
+        </div>
+        <div class="chart-area">
+          <canvas id="quantityChart"></canvas>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-heading">
+          <h2>Distribuição das notas</h2>
+          <p>Quantidade de notas de 1 a 5</p>
+        </div>
+        <div class="chart-area">
+          <canvas id="distributionChart"></canvas>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading">
+        <h2>Resumo por setor</h2>
+        <p>
+          Setores com menos de três avaliações não exibem média.
+        </p>
+      </div>
+
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Setor</th>
+              <th>Avaliações</th>
+              <th>Média</th>
+              <th>Situação</th>
+            </tr>
+          </thead>
+          <tbody id="sectorTable"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Avalie o Atendimento · SENAC · Cloud Challenge 2026.2
+  </footer>
+</body>
+</html>
