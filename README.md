@@ -93,28 +93,31 @@ Desenvolver e disponibilizar uma aplicação web integrada a um banco de dados p
 
 ## 5. Arquitetura proposta
 
-A arquitetura será definida pela equipe durante o planejamento técnico.
 
-**Proposta inicial:**
+flowchart TD
+    A["👥 ESTUDANTES / GESTORES<br/>Avaliações e consulta de indicadores"]
+    B["💻 FRONTEND WEB<br/>HTML, CSS e JavaScript"]
+    C["⚙️ BACKEND / API<br/>Validações e regras de negócio"]
+    D["☁️ AZURE APP SERVICE<br/>Hospedagem da aplicação"]
+    E[("🗄️ POSTGRESQL<br/>Banco de dados")]
+    F["📊 DADOS PERSISTENTES<br/>Avaliações, comentários e indicadores"]
 
-```text
-          ESTUDANTES / GESTORES
-                   |
-                   v
-             FRONTEND WEB
-                   |
-                   v
-             BACKEND / API
-                   |
-                   v
-            AZURE APP SERVICE
-                   |
-                   v
-             POSTGRESQL
-                   |
-                   v
-          DADOS PERSISTENTES
-```
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+
+    classDef usuarios fill:#E8F5FC,stroke:#0482C2,color:#035680,stroke-width:2px;
+    classDef principal fill:#0482C2,stroke:#035680,color:#FFFFFF,stroke-width:2px;
+    classDef secundario fill:#E8F5FC,stroke:#0482C2,color:#035680,stroke-width:2px;
+    classDef dados fill:#DFF5E8,stroke:#17834B,color:#14532D,stroke-width:2px;
+
+    class A usuarios;
+    class B,D principal;
+    class C,E secundario;
+    class F dados;
+
 
 ### Tecnologias previstas
 
