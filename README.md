@@ -22,7 +22,7 @@ uma média enganosa. O gestor pode ocultar comentários impróprios sem alterar 
 | Item | Situação |
 |---|---|
 | API, regras de negócio e validação no servidor | **Implementadas e testadas** |
-| Testes automatizados | **70 testes passando** (30 de API e regras, 20 de segurança, 6 de log, 9 de cabeçalhos e CSP, 5 de XSS), com **98,24% de linhas e 93,13% de ramos** cobertos em `src/` (medido em 18/11/2026; o CI exige no mínimo 90% e 80%) |
+| Testes automatizados | **109 testes passando** (30 de API e regras, 20 de segurança, 6 de log, 9 de cabeçalhos e CSP, 5 de XSS, 5 da carga de demonstração, 28 de configuração por ambiente, 6 dos serviços no front), com **98,54% de linhas e 93,23% de ramos** cobertos em `src/` (medido em 18/11/2026; o CI exige no mínimo 90% e 80%) |
 | Banco PostgreSQL: tabelas, restrições e os 4 serviços iniciais (o `schema.sql` não carrega nenhuma avaliação) | **Implementado** (`banco/schema.sql`, `banco/permissoes.sql`) |
 | Dados fictícios de demonstração (20 avaliações) para o painel não aparecer vazio na apresentação | **Implementado, opcional** (`banco/dados-demonstracao.sql`, `npm run banco -- --demonstracao`): são linhas reais no PostgreSQL, não mock |
 | `GET /health` com teste real do banco | **Implementado e testado** |
@@ -33,7 +33,7 @@ uma média enganosa. O gestor pode ocultar comentários impróprios sem alterar 
 | CD (deploy automático) | **Workflow real, aguardando um segredo**: a cada push na `main` ele testa e, com o segredo `AZURE_WEBAPP_PUBLISH_PROFILE`, publica no App Service e confere o `/health`. Sem o segredo o job de publicação aparece como **ignorado** (nunca verde sem ter publicado). Falta um administrador do repositório cadastrar o segredo (#18); o deploy atual foi feito com `az webapp deploy` |
 | Cabeçalhos de segurança (CSP restritiva, HSTS, anti-clickjacking, COOP/CORP/COEP, Permissions-Policy), limite geral de requisições e Chart.js local | **Aplicados** (#14), com testes que leem o HTML e o JavaScript do front para provar que ele funciona sob a CSP |
 | Redesenho de todas as telas (tokens, tema claro e escuro, acessibilidade, formulários com `method="post"`) e DOM sem `innerHTML` | **Concluídos** (#22, #36) |
-| Testes ponta a ponta do painel em navegador (Playwright, Chromium) | **16 testes** (#17) contra a aplicação real, sob a CSP verdadeira, com PostgreSQL 16 real no CI: formulário, amostra insuficiente, validação, sem rede, login, moderação, sair, XSS, acessibilidade e formulários sem JavaScript |
+| Testes ponta a ponta do painel em navegador (Playwright, Chromium) | **27 testes** (#17) contra a aplicação real, sob a CSP verdadeira, com PostgreSQL 16 real no CI: formulário, amostra insuficiente, validação, sem rede, login, moderação, sair, XSS, acessibilidade e formulários sem JavaScript |
 | Prova de persistência com a palavra do dia, teste do professor e pitch de 90 s | **Pendentes** (#21; roteiro e scripts em `evidencias/`) |
 
 Nível de implantação: a meta é o **Nível A**, que está alcançado. Se a infraestrutura bloquear por 15 minutos,
@@ -144,8 +144,8 @@ npm run banco -- --demonstracao      # idem + 20 avaliações FICTÍCIAS de demo
 npm run dev                          # sobe em http://localhost:3000 lendo o .env
 npm start                            # igual, sem ler o .env (o ambiente já tem as variáveis)
 npm run lint                         # ESLint em servidor, testes e navegador
-npm test                             # roda os 70 testes
-npm run test:e2e                     # 16 testes no navegador (Chromium); sobe a aplicação sozinho
+npm test                             # roda os 109 testes
+npm run test:e2e                     # 27 testes no navegador (Chromium); sobe a aplicação sozinho
 npm run test:cobertura               # testes com cobertura mínima (90% de linhas e 80% de ramos)
 npm run auditar                      # npm audit das dependências de produção
 ```
@@ -197,7 +197,7 @@ reinício, logs, parada do servidor e exclusão do grupo.
 
 Todos executados com `npm test`, contra um **PostgreSQL de verdade em memória (PGlite)** que usa o mesmo
 `banco/schema.sql` da produção. No CI, a mesma suíte roda também contra um **PostgreSQL 16 real**.
-Resultado medido em 18/11/2026: **70 de 70 passaram**, cobertura de **98,24% de linhas e 93,13% de ramos** em `src/`.
+Resultado medido em 18/11/2026: **109 de 109 passaram**, cobertura de **98,54% de linhas e 93,23% de ramos** em `src/`.
 Não há objetos falsos de banco: a falha de banco é testada com uma conexão real recusada.
 
 | Arquivo | Testes | O que cobre |
@@ -218,7 +218,7 @@ Casos de aceite (os negativos são CA1 e CA2):
 
 A tabela completa regra por regra, com o teste de cada uma, está em
 [docs/regras-de-negocio.md](docs/regras-de-negocio.md). As entradas inválidas são enviadas direto à API para
-provar que a validação do servidor não depende do front-end. O painel em navegador real tem 16 testes próprios
+provar que a validação do servidor não depende do front-end. O painel em navegador real tem 27 testes próprios
 (`npm run test:e2e`, seção abaixo). O que **ainda não** tem teste automatizado: as permissões do usuário do banco
 em produção, que foram conferidas à mão.
 
@@ -315,8 +315,34 @@ issues foram fechadas após a revisão técnica.
 
 ## 11. Dificuldade superada
 
-> **A preencher pelo grupo com a dificuldade real** (problema, diagnóstico, causa e solução). A ficha
-> pede um caso que realmente aconteceu na construção; não foi registrado nenhum aqui para não inventar.
+Caso principal, ocorrido na primeira implantação (18/11/2026):
+
+- **Problema.** Na URL pública, o login do gestor respondia **401** mesmo com a senha certa. Localmente e nos testes o
+  login funcionava.
+- **Diagnóstico.** Primeiro descartei a senha: a verificação com a senha e o hash do arquivo local dava verdadeiro. Depois
+  comparei o valor de `ADMIN_SENHA_HASH` guardado no App Service com o do arquivo, e eles não eram iguais. A senha estava
+  certa; o que chegou ao Azure é que estava errado.
+- **Causa.** O hash tem o formato `scrypt$<sal>$<hash>`. Ao ler o arquivo de variáveis com `source`, o shell tratou os
+  cifrões como variáveis (`$08abf...` virou `$0` seguido de texto) e gravou um hash **corrompido** nas configurações do
+  app. Uma segunda causa apareceu depois da correção: o reinício do App Service é assíncrono, e o teste seguinte ainda
+  falou com o processo antigo (o `/health` respondia 200, mas era a versão velha, com o hash errado).
+- **Solução.** (1) O arquivo passou a ser lido por um script em Node, sem expansão do shell, que **valida o formato do
+  hash com uma expressão regular antes de enviar**; (2) depois de mudar configuração, o teste espera o `iniciado_em` do
+  `/health` mudar (prova de que o processo novo subiu) antes de testar o login; (3) o login em produção foi conferido de
+  ponta a ponta (cookie `HttpOnly`, `SameSite=Strict` e `Secure`).
+- **O que ficou.** Um modo de falha que só aparece em produção, porque o teste automatizado usa o hash gerado na hora
+  e nunca passa pelo shell. A prova de reinício (`iniciado_em`) virou parte do roteiro de evidências.
+
+Outras dificuldades reais da implantação, resolvidas na mesma sessão:
+
+- **Teste de segurança achou um defeito de verdade:** um cookie com `%%%` fazia o `decodeURIComponent` lançar erro e a
+  rota responder **500** em vez de 401. Corrigido em `src/auth.js` e coberto por teste (PR #27).
+- **`az postgres flexible-server create` falhou duas vezes:** primeiro por um argumento que esta versão do CLI não aceita
+  (`--database-name`; o banco passou a ser criado depois, com `db create`) e depois por `MissingSubscriptionRegistration`
+  (o provedor `Microsoft.DBforPostgreSQL` não estava registrado na assinatura; registrado com `az provider register`).
+- **Node 20 recusado pelo App Service:** a plataforma só aceitava versões mais novas; o app passou para o Node 22 LTS.
+- **Credencial de publicação desligada:** o perfil de publicação não funcionava até ligar a credencial básica do `scm`
+  no app (decisão de segurança documentada em `docs/ci-cd.md`).
 
 ## 12. Limitações conhecidas e próximos passos
 
@@ -338,7 +364,7 @@ issues foram fechadas após a revisão técnica.
 - Os testes e2e rodam só no Chromium (sem Firefox, Safari nem celular real) e sem alta disponibilidade do banco (um servidor B1ms).
 
 **Próximos passos:** registrar a prova de persistência com o `G01-PALAVRA` do dia (roteiro em `evidencias/`); gravar
-o pitch de 90 segundos; fechar as issues #18 e #21; preencher a seção de dificuldade superada; parar o
+o pitch de 90 segundos; fechar as issues #18 e #21; parar o
 servidor PostgreSQL ao final da aula e excluir o grupo de recursos `rg-cloud-g01` na data indicada pelo professor.
 
 ## 13. Equipe e responsabilidades
