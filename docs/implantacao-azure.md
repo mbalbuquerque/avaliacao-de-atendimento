@@ -48,7 +48,7 @@ az appservice plan create --name plan-cloud-g01 --resource-group $GRUPO \
   --location $REGIAO --sku F1 --is-linux
 
 az webapp create --name $APP --resource-group $GRUPO --plan plan-cloud-g01 \
-  --runtime "NODE:20-lts"
+  --runtime "NODE:22-lts"
 ```
 
 Confira os nomes de runtime com `az webapp list-runtimes --os linux`.
@@ -124,7 +124,7 @@ Com o terminal na raiz do projeto e `az login` feito:
 
 ```bash
 az webapp up --name $APP --resource-group $GRUPO --plan plan-cloud-g01 \
-  --runtime "NODE:20-lts" --location $REGIAO
+  --runtime "NODE:22-lts" --location $REGIAO
 ```
 
 Se preferir o deploy por GitHub (Centro de Implantação) ou pela extensão Azure App Service do VS Code,
