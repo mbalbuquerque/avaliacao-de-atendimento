@@ -1,19 +1,44 @@
 /* Página inicial: apresentação, formulário, painel por serviço e comentários. */
 
 .hero {
+  position: relative;
   display: grid;
   gap: var(--e4);
-  padding-block: var(--e6) var(--e5);
+  margin-top: var(--e5);
+  padding: clamp(2rem, 5vw, 5rem);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 92% 12%, rgb(255 255 255 / 14%) 0 0.45rem, transparent 0.5rem 100%),
+    radial-gradient(circle at 84% 25%, rgb(255 255 255 / 10%) 0 1.1rem, transparent 1.15rem 100%),
+    linear-gradient(135deg, #123d35, #126b5c 56%, #2c8373);
+  color: #f8fbf8;
+  box-shadow: var(--sombra-flutuante);
 }
 
 .hero p {
   max-width: 40rem;
-  color: var(--texto-2);
+  color: rgb(248 251 248 / 82%);
   font-size: var(--t-lg);
 }
 
 .hero .btn {
   justify-self: start;
+  background: #fffefb;
+  color: #0f5146;
+  box-shadow: none;
+}
+
+.hero .btn:hover {
+  background: #e6f5ee;
+  color: #0a453c;
+}
+
+.hero .etiqueta {
+  width: fit-content;
+  border-color: rgb(255 255 255 / 26%);
+  background: rgb(255 255 255 / 12%);
+  color: #fffefb;
 }
 
 .grade {
@@ -91,6 +116,12 @@
   border: 1px solid var(--borda);
   border-radius: var(--r-md);
   background: var(--superficie-2);
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.servico:hover {
+  box-shadow: var(--sombra);
+  transform: translateY(-2px);
 }
 
 .servico-topo {
@@ -169,7 +200,7 @@ progress.barra::-moz-progress-bar {
   padding: var(--e4);
   border: 1px solid var(--borda);
   border-radius: var(--r-md);
-  background: var(--superficie-2);
+  background: linear-gradient(135deg, var(--superficie-2), var(--superficie));
 }
 
 .comentario header {
@@ -191,6 +222,15 @@ progress.barra::-moz-progress-bar {
 }
 
 @media (min-width: 60rem) {
+  .hero {
+    grid-template-columns: minmax(0, 1.3fr) minmax(15rem, 0.7fr);
+    column-gap: var(--e8);
+  }
+
+  .hero .btn {
+    grid-column: 1;
+  }
+
   .grade {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }

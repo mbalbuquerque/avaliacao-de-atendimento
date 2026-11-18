@@ -282,8 +282,9 @@ no GitHub), o CI precisa passar e só então há o merge. Os commits são pequen
 | #28 | Workflow de deploy (aguarda o segredo) | #18 (aberta) |
 | este PR | Documentação final | #20 |
 
-Ainda abertas: #18 (segredo do deploy) e #21 (prova de persistência e evidências). As issues #2 a #8 são os papéis
-de cada integrante e a #10 é o checklist técnico de integração; ficam com os responsáveis.
+Ainda abertas: #18 (segredo do deploy), #21 (prova de persistência e evidências), #5 (QA) e #8
+(acompanhamento do professor). As entregas de dados e desenvolvimento foram concluídas e suas
+issues foram fechadas após a revisão técnica.
 
 ## 11. Dificuldade superada
 
@@ -295,8 +296,8 @@ de cada integrante e a #10 é o checklist técnico de integração; ficam com os
 **Limitações:**
 - Faltam os prints da prova de persistência (E2), que dependem da palavra do dia, e o teste do professor (PROF-HHMM).
 - O deploy automático está desligado até alguém com permissão de administrador cadastrar o segredo (#18).
-- A CSP, o HSTS e o Chart.js local já estão no código (#14), mas o ZAP só deixa de apontá-los quando rodar de novo
-  contra a versão publicada na Azure.
+- A varredura ZAP posterior às correções registrou 0 alertas altos; permanecem apenas avisos
+  informativos a acompanhar em versões futuras.
 - Um único gestor, definido por variáveis de ambiente, sem cadastro, sem recuperação de senha e sem segundo fator.
 - A sessão do gestor não é revogada no servidor: o logout apaga o cookie do navegador, e um cookie roubado vale
   até vencer (8 horas). Trocar `SESSAO_SEGREDO` invalida todas as sessões.

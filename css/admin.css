@@ -4,7 +4,11 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--e4);
-  margin-bottom: var(--e4);
+  margin-bottom: var(--e5);
+  padding: var(--e4);
+  border: 1px solid var(--borda);
+  border-radius: var(--r-md);
+  background: var(--superficie-2);
 }
 
 .filtros .campo {
@@ -21,11 +25,19 @@
   padding: var(--e4);
   border: 1px solid var(--borda);
   border-radius: var(--r-md);
-  background: var(--superficie-2);
+  background: var(--superficie);
+  box-shadow: var(--sombra);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cartao-comentario:hover {
+  box-shadow: var(--sombra-flutuante);
+  transform: translateY(-2px);
 }
 
 .cartao-comentario--oculto {
   border-style: dashed;
+  opacity: 0.82;
 }
 
 .cartao-comentario header,
