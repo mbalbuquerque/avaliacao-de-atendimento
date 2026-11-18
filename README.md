@@ -23,9 +23,9 @@ uma média enganosa. O gestor pode ocultar comentários impróprios sem alterar 
 | API, regras de negócio e validação no servidor | **Implementadas e testadas** (30 de 30 testes passando na execução local) |
 | Banco PostgreSQL: tabelas, restrições, serviços iniciais e 20 avaliações fictícias | **Implementado** (`banco/schema.sql`, `banco/dados-iniciais.sql`) |
 | `GET /health` com teste real do banco | **Implementado e testado** |
-| Moderação do gestor com autenticação no servidor | **API implementada e testada**; tela do gestor em integração |
-| Integração do painel (formulário, dashboard) com a API | **Em andamento** (o painel ainda está em modo demonstração em `js/config.js`) |
-| Implantação na Azure (App Service e PostgreSQL) | **PENDENTE** (recursos ainda não criados; roteiro em `docs/implantacao-azure.md`) |
+| Moderação do gestor com autenticação no servidor | **Implementada e testada** (API e tela do gestor; cookie `HttpOnly`, `SameSite=Strict`, `Secure`) |
+| Integração do painel (formulário, dashboard, tela do gestor) com a API | **Concluída** (`js/config.js` em modo `api`; validada no Chrome contra PGlite e em produção) |
+| Implantação na Azure (App Service e PostgreSQL) | **Nível A implantado** em https://app-cloud-g01-en.azurewebsites.net (App Service Linux F1, Node 22 LTS, e PostgreSQL 16 Flexible Server B1ms, Brazil South); `/health` responde 200 com `database: connected`; HTTPS obrigatório; usuário do banco da aplicação com privilégios mínimos (`banco/permissoes.sql`) |
 | Evidências (prints da prova de persistência) e pitch de 90 s | **Pendentes** (lista e scripts em `evidencias/`) |
 
 Nível de implantação: a meta é o **Nível A**. Se a infraestrutura bloquear por 15 minutos, o grupo desce
@@ -36,10 +36,10 @@ para o Nível B ou C e registra o motivo no painel da turma.
 | Código | Requisito | Status |
 |---|---|---|
 | RF01 | Carregar os quatro serviços por script SQL inicial | **Pronto.** `banco/schema.sql` insere Secretaria, Biblioteca, Cantina e Laboratórios; teste `RF01` |
-| RF02 | Registrar avaliação anônima com nota inteira de 1 a 5 e comentário opcional de até 280 caracteres | **API pronta e testada** (`POST /api/avaliacoes`). Formulário do painel: integração em andamento |
-| RF03 | Painel por serviço: média com 1 casa, quantidade e distribuição das notas, calculadas no banco | **API pronta e testada** (`GET /api/indicadores`, agregação em SQL). Dashboard: integração em andamento |
+| RF02 | Registrar avaliação anônima com nota inteira de 1 a 5 e comentário opcional de até 280 caracteres | **Implementado e testado** (`POST /api/avaliacoes`; formulário do painel integrado) |
+| RF03 | Painel por serviço: média com 1 casa, quantidade e distribuição das notas, calculadas no banco | **Implementado e testado** (`GET /api/indicadores`, agregação em SQL; dashboard integrado) |
 | RF04 | Menos de 3 avaliações mostra "amostra insuficiente" no lugar da média (regra central) | **Pronto e testado** (`media: null`, `amostra_suficiente: false`) |
-| RF05 | Moderação: o gestor oculta comentário; a nota continua contando (regra central) | **API pronta e testada** (`PATCH /api/admin/avaliacoes/{id}`). Tela do gestor: integração em andamento |
+| RF05 | Moderação: o gestor oculta comentário; a nota continua contando (regra central) | **Implementado e testado** (`PATCH /api/admin/avaliacoes/{id}`; tela do gestor integrada) |
 
 Regras detalhadas e casos de aceite: [docs/regras-de-negocio.md](docs/regras-de-negocio.md).
 Contrato das rotas: [docs/contrato-api.md](docs/contrato-api.md). Requisições prontas: [requests.http](requests.http).
@@ -57,7 +57,7 @@ flowchart LR
 
 O navegador carrega as páginas e chama a API no **mesmo endereço**. A API valida tudo no servidor, grava no
 PostgreSQL e calcula os indicadores no banco. A string de conexão vem só da variável de ambiente
-`DATABASE_URL`. A implantação na Azure ainda está pendente (ver seção 2).
+`DATABASE_URL`. A implantação na Azure (Nível A) está descrita na seção 2 e em `docs/implantacao-azure.md`.
 
 ### Decisão justificada: PostgreSQL relacional, com a média calculada no SQL
 
@@ -116,7 +116,7 @@ contra abuso usa o IP só na memória, por 1 minuto, sem gravar em disco nem no 
 
 ## 6. Como executar
 
-**Requisitos:** Node.js 20 ou mais novo. Para rodar com dados reais, um PostgreSQL (local ou o da Azure).
+**Requisitos:** Node.js 20 ou mais novo (o App Service usa o Node 22 LTS). Para rodar com dados reais, um PostgreSQL (local ou o da Azure).
 Os testes **não** precisam de banco instalado.
 
 ```bash
@@ -131,7 +131,7 @@ npm test                             # roda os 30 testes
 
 | Variável | Para quê |
 |---|---|
-| `DATABASE_URL` | String de conexão do PostgreSQL (com `?sslmode=require` na Azure) |
+| `DATABASE_URL` | String de conexão do PostgreSQL (com `?sslmode=verify-full` na Azure) |
 | `PORT` | Porta local (na Azure o App Service define sozinho) |
 | `ADMIN_USUARIO` | Usuário do gestor |
 | `ADMIN_SENHA_HASH` | Hash scrypt da senha do gestor (gerado por `npm run hash`) |
@@ -214,18 +214,18 @@ cada push e pull request.
 ## 10. Limitações conhecidas e próximos passos
 
 **Limitações:**
-- Implantação na Azure pendente: ainda não há URL pública, prints de persistência nem teste do professor.
-- Integração do painel (formulário, dashboard e tela do gestor) com a API em andamento; o modo
-  demonstração (`localStorage`) continua existindo no código do front-end.
+- Faltam os prints da prova de persistência (E2), que dependem da palavra do dia, e o teste do professor (PROF-HHMM).
+- O modo demonstração (`localStorage`) continua existindo no front-end, mas só liga por escolha (`?modo=demo`).
 - Um único gestor, definido por variáveis de ambiente (sem cadastro de gestores).
 - O limite contra abuso é em memória e por instância: reiniciar ou ter mais de uma instância zera a
   contagem. Isso protege o anonimato, mas é um controle simples.
 - Qualquer pessoa pode enviar avaliações (não há como provar que o autor é estudante sem identificá-lo).
-- Os testes usam PGlite (PostgreSQL em memória); ainda não foram executados contra o PostgreSQL da Azure.
+- Os testes automatizados usam PGlite (PostgreSQL em memória). Contra o PostgreSQL da Azure foram conferidos `/health`, as rotas de leitura, o login do gestor e as permissões do usuário do banco (inserir e ocultar permitidos; alterar nota, apagar e derrubar tabela bloqueados).
+- O gestor usa o mesmo usuário e hash em variável de ambiente; a senha não tem recuperação.
 
-**Próximos passos:** criar os recursos na Azure e registrar a prova de persistência; terminar a integração
-do painel; gravar o pitch de 90 segundos; preencher a seção de dificuldade superada; adicionar o
-`GXX-PALAVRA` do dia nas evidências.
+**Próximos passos:** registrar a prova de persistência com o `G01-PALAVRA` do dia (roteiro em `evidencias/`); gravar o
+pitch de 90 segundos; preencher a seção de dificuldade superada; parar o servidor PostgreSQL ao final da aula
+e excluir o grupo de recursos `rg-cloud-g01` na data indicada pelo professor.
 
 ## 11. Equipe e responsabilidades
 
