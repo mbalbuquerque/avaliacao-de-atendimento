@@ -1,0 +1,9 @@
+# Segredos: nunca vão para o Git
+.env
+.env.*
+!.env.example
+
+# Dependências e artefatos
+node_modules/
+*.log
+.DS_Store
