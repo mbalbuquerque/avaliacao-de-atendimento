@@ -1,88 +1,77 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1">
-
-  <meta name="theme-color" content="#035680">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex">
 
   <title>Moderação | Avalie o Atendimento</title>
 
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <meta name="theme-color" content="#f5f7fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
+
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/admin.css">
 </head>
 
 <body>
+  <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+
   <header class="topbar">
-    <div class="topbar-inner">
-      <a href="index.html" class="brand">
-        <span class="brand-icon">★</span>
-        <span>
-          <strong>AVALIE O ATENDIMENTO</strong>
-          <small>Painel de moderação</small>
+    <div class="container topbar-inner">
+      <a class="brand" href="index.html" aria-label="Avalie o Atendimento, página inicial">
+        <span class="brand-marca" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/></svg>
         </span>
+        <span class="brand-nome">Avalie o Atendimento<small>Painel de moderação</small></span>
       </a>
 
-      <nav class="topnav" aria-label="Navegação">
-        <a href="index.html">Avaliações</a>
+      <nav class="nav" aria-label="Principal">
+        <a href="index.html">Avaliar</a>
         <a href="dashboard.html">Dashboard</a>
         <a href="admin-login.html" id="logoutLink" hidden>Sair</a>
       </nav>
     </div>
   </header>
 
-  <main class="container">
-    <section class="page-heading">
+  <main id="conteudo" class="container">
+    <section class="cabecalho-pagina">
       <div>
-        <span class="eyebrow">GESTÃO DE COMENTÁRIOS</span>
+        <span class="etiqueta">Gestão de comentários</span>
         <h1>Moderação de avaliações</h1>
-        <p>
-          Consulte comentários e controle sua
-          visibilidade sem alterar as notas registradas.
-        </p>
+        <p>Oculte ou reexiba comentários sem mexer nas notas registradas.</p>
       </div>
-
-      <span id="modeBadge" class="mode-badge">
-        Verificando sessão...
-      </span>
+      <span id="modeBadge" class="selo selo--info" role="status">Verificando sessão…</span>
     </section>
 
-    <section class="metrics" aria-label="Resumo">
-      <article class="metric">
+    <section class="metricas" aria-label="Resumo">
+      <article class="metrica">
         <span>Comentários</span>
         <strong id="totalComments">0</strong>
       </article>
-
-      <article class="metric">
+      <article class="metrica">
         <span>Visíveis</span>
         <strong id="visibleComments">0</strong>
       </article>
-
-      <article class="metric">
+      <article class="metrica">
         <span>Ocultos</span>
         <strong id="hiddenComments">0</strong>
       </article>
     </section>
 
-    <section class="panel">
-      <div class="panel-heading">
+    <section class="painel" aria-labelledby="titulo-lista">
+      <div class="painel-titulo">
         <div>
-          <h2>Comentários recebidos</h2>
-          <p>Filtre por serviço e situação.</p>
+          <h2 id="titulo-lista">Comentários recebidos</h2>
+          <p>Filtre por serviço e por situação.</p>
         </div>
-
-        <button
-          id="refreshButton"
-          class="refresh-button"
-          type="button"
-        >
-          Atualizar
-        </button>
+        <button id="refreshButton" class="btn btn-secundaria" type="button">Atualizar</button>
       </div>
 
-      <div class="filters">
-        <div class="field">
+      <div class="filtros">
+        <div class="campo">
           <label for="serviceFilter">Serviço</label>
           <select id="serviceFilter">
             <option value="all">Todos os serviços</option>
@@ -93,7 +82,7 @@
           </select>
         </div>
 
-        <div class="field">
+        <div class="campo">
           <label for="statusFilter">Situação</label>
           <select id="statusFilter">
             <option value="all">Todos</option>
@@ -103,15 +92,10 @@
         </div>
       </div>
 
-      <p
-        id="adminMessage"
-        class="admin-message"
-        role="status"
-        aria-live="polite"
-      ></p>
+      <p id="adminMessage" class="mensagem" role="status" aria-live="polite"></p>
 
-      <div id="commentsList" class="comments-list">
-        <p class="empty">Carregando comentários...</p>
+      <div id="commentsList" class="lista-moderacao">
+        <p class="vazio">Carregando comentários…</p>
       </div>
     </section>
   </main>

@@ -1,84 +1,89 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dashboard | Avalie o Atendimento</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
+  <title>Dashboard | Avalie o Atendimento</title>
+  <meta name="description" content="Indicadores de satisfação por serviço: média, quantidade e distribuição das notas.">
+
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <meta name="theme-color" content="#f5f7fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
+
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/dashboard.css">
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js" defer></script>
+  <script src="vendor/chart.umd.js" defer></script>
   <script src="js/config.js" defer></script>
   <script src="js/api.js" defer></script>
   <script src="js/dashboard.js" defer></script>
+  <script src="js/pwa.js" defer></script>
 </head>
-<body>
-  <header class="topbar">
-    <a class="brand" href="index.html">
-      <span class="brand-icon">★</span>
-      <span>Avalie <b>Atendimento</b></span>
-    </a>
 
-    <nav>
-      <a href="index.html">Fazer avaliação</a>
-      <a href="dashboard.html" class="active">Dashboard</a>
-    </nav>
+<body>
+  <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a class="brand" href="index.html" aria-label="Avalie o Atendimento, página inicial">
+        <span class="brand-marca" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/></svg>
+        </span>
+        <span class="brand-nome">Avalie o Atendimento<small>Cloud Challenge · Grupo 1</small></span>
+      </a>
+
+      <nav class="nav" aria-label="Principal">
+        <a href="index.html">Avaliar</a>
+        <a href="dashboard.html" aria-current="page">Dashboard</a>
+      </nav>
+
+      <span id="connectionStatus" class="status-conexao" role="status">Conectado</span>
+    </div>
   </header>
 
-  <main class="container">
-    <section class="page-heading">
+  <main id="conteudo" class="container">
+    <section class="cabecalho-pagina">
       <div>
-        <span class="eyebrow">CLOUD CHALLENGE · GRUPO 1</span>
-        <h1>Painel de Avaliações</h1>
-        <p>
-          Acompanhe a satisfação dos estudantes por setor,
-          com indicadores e gráficos atualizados.
-        </p>
+        <span class="etiqueta">Indicadores</span>
+        <h1>Painel de avaliações</h1>
+        <p>Satisfação por serviço, calculada no banco de dados e atualizada a cada 30 segundos.</p>
       </div>
-
-      <div class="heading-actions">
-        <button id="refreshButton" type="button">
-          ↻ Atualizar dados
-        </button>
-      </div>
+      <button id="refreshButton" class="btn btn-secundaria" type="button">Atualizar dados</button>
     </section>
 
-    <div class="status-notice" id="dataSourceNotice">
-      Carregando indicadores...
-    </div>
+    <div id="dataSourceNotice" class="aviso aviso--info" role="status">Carregando indicadores…</div>
 
-    <section class="metrics">
-      <article class="metric">
+    <section class="metricas" aria-label="Resumo">
+      <article class="metrica">
         <span>Total de avaliações</span>
         <strong id="totalReviews">0</strong>
         <small>Registros recebidos</small>
       </article>
-
-      <article class="metric">
-        <span>Setores avaliados</span>
-        <strong id="totalServices">4</strong>
+      <article class="metrica">
+        <span>Serviços avaliados</span>
+        <strong id="totalServices">0</strong>
         <small>Serviços cadastrados</small>
       </article>
-
-      <article class="metric">
-        <span>Setores com amostra válida</span>
+      <article class="metrica">
+        <span>Com amostra válida</span>
         <strong id="validServices">0</strong>
         <small>Mínimo de 3 avaliações</small>
       </article>
-
-      <article class="metric">
+      <article class="metrica">
         <span>Média geral</span>
         <strong id="generalAverage">—</strong>
-        <small>Somente quando houver amostra suficiente</small>
+        <small>Só com amostra suficiente</small>
       </article>
     </section>
 
-    <section class="filters">
-      <div>
-        <label for="serviceFilter">Filtrar por setor</label>
+    <section class="filtros" aria-label="Filtros">
+      <div class="campo">
+        <label for="serviceFilter">Filtrar por serviço</label>
         <select id="serviceFilter">
-          <option value="all">Todos os setores</option>
+          <option value="all">Todos os serviços</option>
           <option value="1">Secretaria</option>
           <option value="2">Biblioteca</option>
           <option value="3">Cantina</option>
@@ -87,54 +92,62 @@
       </div>
     </section>
 
-    <section class="chart-grid">
-      <article class="panel chart-wide">
-        <div class="panel-heading">
-          <h2>Média das avaliações por setor</h2>
-          <p>Escala de 1 a 5 estrelas</p>
+    <section class="graficos" aria-label="Gráficos">
+      <article class="painel grafico--largo">
+        <div class="painel-titulo">
+          <div>
+            <h2>Média por serviço</h2>
+            <p>Escala de 1 a 5 estrelas</p>
+          </div>
         </div>
-        <div class="chart-area">
-          <canvas id="averageChart"></canvas>
-        </div>
+        <figure class="grafico-figura">
+          <div class="grafico"><canvas id="averageChart" role="img" aria-label="Gráfico de barras com a média por serviço"></canvas></div>
+          <figcaption id="averageSummary" class="dado-resumo"></figcaption>
+        </figure>
       </article>
 
-      <article class="panel">
-        <div class="panel-heading">
-          <h2>Quantidade de avaliações</h2>
-          <p>Participação por setor</p>
+      <article class="painel">
+        <div class="painel-titulo">
+          <div>
+            <h2>Quantidade de avaliações</h2>
+            <p>Participação de cada serviço</p>
+          </div>
         </div>
-        <div class="chart-area">
-          <canvas id="quantityChart"></canvas>
-        </div>
+        <figure class="grafico-figura">
+          <div class="grafico"><canvas id="quantityChart" role="img" aria-label="Gráfico de rosca com a quantidade de avaliações por serviço"></canvas></div>
+        </figure>
       </article>
 
-      <article class="panel">
-        <div class="panel-heading">
-          <h2>Distribuição das notas</h2>
-          <p>Quantidade de notas de 1 a 5</p>
+      <article class="painel">
+        <div class="painel-titulo">
+          <div>
+            <h2>Distribuição das notas</h2>
+            <p>Quantas notas de 1 a 5</p>
+          </div>
         </div>
-        <div class="chart-area">
-          <canvas id="distributionChart"></canvas>
-        </div>
+        <figure class="grafico-figura">
+          <div class="grafico"><canvas id="distributionChart" role="img" aria-label="Gráfico de barras com a quantidade de notas de 1 a 5"></canvas></div>
+        </figure>
       </article>
     </section>
 
-    <section class="panel">
-      <div class="panel-heading">
-        <h2>Resumo por setor</h2>
-        <p>
-          Setores com menos de três avaliações não exibem média.
-        </p>
+    <section class="painel" aria-labelledby="titulo-resumo">
+      <div class="painel-titulo">
+        <div>
+          <h2 id="titulo-resumo">Resumo por serviço</h2>
+          <p>Serviços com menos de três avaliações não mostram a média.</p>
+        </div>
       </div>
 
-      <div class="table-scroll">
-        <table>
+      <div class="tabela-rolagem">
+        <table class="tabela">
+          <caption class="sr-only">Quantidade, média e situação da amostra de cada serviço</caption>
           <thead>
             <tr>
-              <th>Setor</th>
-              <th>Avaliações</th>
-              <th>Média</th>
-              <th>Situação</th>
+              <th scope="col">Serviço</th>
+              <th scope="col">Avaliações</th>
+              <th scope="col">Média</th>
+              <th scope="col">Situação</th>
             </tr>
           </thead>
           <tbody id="sectorTable"></tbody>
@@ -143,8 +156,10 @@
     </section>
   </main>
 
-  <footer>
-    Avalie o Atendimento · SENAC · Cloud Challenge 2026.2
+  <footer class="rodape">
+    <div class="container">
+      <span>Avalie o Atendimento · SENAC · Cloud Challenge 2026.2</span>
+    </div>
   </footer>
 </body>
 </html>

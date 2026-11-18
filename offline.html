@@ -1,58 +1,32 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#035680">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
   <title>Sem conexão | Avalie o Atendimento</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 24px;
-      background: #F4F8FB;
-      color: #3D3D3D;
-      font-family: system-ui, sans-serif;
-      text-align: center;
-    }
-    main {
-      max-width: 420px;
-      padding: 36px 26px;
-      border: 1px solid #DDE9F1;
-      border-radius: 22px;
-      background: white;
-    }
-    .symbol {
-      font-size: 55px;
-      color: #0482C2;
-    }
-    h1 { color: #035680; }
-    p { line-height: 1.7; }
-    button {
-      background: #0482C2;
-      color: white;
-      border: 0;
-      padding: 14px 24px;
-      border-radius: 10px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-  </style>
+
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <meta name="theme-color" content="#f5f7fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
+
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
 </head>
+
 <body>
-  <main>
-    <div class="symbol">★</div>
-    <h1>Você está offline</h1>
-    <p>
-      Não foi possível carregar esta página.
-      Conecte-se à internet para enviar avaliações
-      e consultar resultados atualizados.
-    </p>
-    <button onclick="location.reload()">Tentar novamente</button>
+  <main class="pagina-central">
+    <section class="cartao-central centralizado" aria-labelledby="titulo-offline">
+      <div class="simbolo-grande" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/></svg>
+      </div>
+      <h1 id="titulo-offline">Você está sem conexão</h1>
+      <p>
+        Não foi possível carregar esta página. Conecte-se à internet para enviar avaliações
+        e ver os resultados atualizados. Nenhuma avaliação é enviada sem conexão.
+      </p>
+      <a class="btn btn-primaria" href="index.html">Tentar novamente</a>
+    </section>
   </main>
 </body>
 </html>

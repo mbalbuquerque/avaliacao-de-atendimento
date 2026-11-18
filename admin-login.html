@@ -1,78 +1,55 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#035680">
-  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex">
 
-  <title>Login Administrativo | Avalie o Atendimento</title>
+  <title>Login do gestor | Avalie o Atendimento</title>
 
-  <link rel="stylesheet" href="css/admin-login.css">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <meta name="theme-color" content="#f5f7fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
+
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/login.css">
 </head>
+
 <body>
-  <main class="login-page">
-    <section class="login-card">
-      <a class="back-link" href="index.html">
-        ← Voltar ao início
-      </a>
+  <main class="pagina-central">
+    <section class="cartao-central" aria-labelledby="titulo-login">
+      <a class="voltar" href="index.html">← Voltar ao início</a>
 
       <div class="brand">
-        <div class="brand-icon">★</div>
-        <span class="brand-name">AVALIE O ATENDIMENTO</span>
-        <span class="brand-subtitle">Cloud Challenge • Grupo 1</span>
+        <span class="brand-marca" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/></svg>
+        </span>
+        <span class="brand-nome">Avalie o Atendimento<small>Área do gestor</small></span>
       </div>
 
-      <div class="login-heading">
-        <span class="eyebrow">ÁREA RESTRITA</span>
-        <h1>Acesso administrativo</h1>
-        <p>
-          Entre com suas credenciais para gerenciar
-          a moderação dos comentários.
-        </p>
-      </div>
+      <span class="etiqueta">Área restrita</span>
+      <h1 id="titulo-login">Entrar para moderar</h1>
+      <p>Use as credenciais do gestor para ocultar ou reexibir comentários.</p>
 
-      <form id="loginForm" class="login-form">
-        <div class="field">
+      <form id="loginForm" method="post" action="/api/admin/login" novalidate>
+        <div class="campo">
           <label for="username">Usuário</label>
-          <input
-            id="username"
-            name="username"
-            type="text"
-            autocomplete="username"
-            placeholder="Digite seu usuário"
-            required
-          >
+          <input id="username" name="username" type="text" autocomplete="username"
+            autocapitalize="none" spellcheck="false" required>
         </div>
 
-        <div class="field">
+        <div class="campo">
           <label for="password">Senha</label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            autocomplete="current-password"
-            placeholder="Digite sua senha"
-            required
-          >
+          <input id="password" name="password" type="password" autocomplete="current-password" required>
         </div>
 
-        <p
-          id="loginMessage"
-          class="login-message"
-          role="status"
-          aria-live="polite"
-        ></p>
+        <p id="loginMessage" class="login-mensagem" role="alert"></p>
 
-        <button id="loginButton" type="submit">
-          Entrar no painel
-        </button>
+        <button id="loginButton" class="btn btn-primaria btn-bloco" type="submit">Entrar no painel</button>
       </form>
 
-      <p class="login-footer">
-        Acesso exclusivo aos gestores autorizados.
-      </p>
+      <p class="rodape-login">Acesso exclusivo aos gestores autorizados.</p>
     </section>
   </main>
 

@@ -1,289 +1,164 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <title>Avalie o Atendimento | SENAC</title>
-  <meta
-    name="description"
-    content="Avalie os serviços da instituição sem precisar se identificar."
-  >
+  <meta name="description" content="Avalie os serviços da instituição sem precisar se identificar.">
 
-  <!-- PWA -->
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="theme-color" content="#f5f7fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
 
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta
-    name="apple-mobile-web-app-status-bar-style"
-    content="default"
-  >
-  <meta name="theme-color" content="#035680">
-
-  <!-- ESTILOS -->
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/pwa.css">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/index.css">
 </head>
 
 <body>
+  <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
 
-  <!-- CABEÇALHO -->
   <header class="topbar">
-    <a class="brand" href="#inicio" aria-label="Avalie o Atendimento">
-      <span class="brand-mark" aria-hidden="true">★</span>
+    <div class="container topbar-inner">
+      <a class="brand" href="index.html" aria-label="Avalie o Atendimento, página inicial">
+        <span class="brand-marca" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/></svg>
+        </span>
+        <span class="brand-nome">Avalie o Atendimento<small>Cloud Challenge · Grupo 1</small></span>
+      </a>
 
-      <span>
-        Avalie<span class="brand-light">Atendimento</span>
-        <small>Cloud Challenge • Grupo 1</small>
-      </span>
-    </a>
+      <nav class="nav" aria-label="Principal">
+        <a href="index.html" aria-current="page">Avaliar</a>
+        <a href="dashboard.html">Dashboard</a>
+      </nav>
 
-    <nav aria-label="Principal">
-      <a href="#avaliar">Avaliar</a>
-      <a href="dashboard.html">Dashboard</a>
-    </nav>
-
-    <div class="pwa-actions">
-      <span id="connectionStatus" class="connection-status">
-        Conectado
-      </span>
-
-      <button
-        id="installApp"
-        class="install-button"
-        type="button"
-        hidden
-      >
-        Instalar aplicativo
-      </button>
+      <span id="connectionStatus" class="status-conexao" role="status">Conectado</span>
+      <button id="installApp" class="btn btn-secundaria" type="button" hidden>Instalar aplicativo</button>
     </div>
   </header>
 
-  <main id="inicio">
-
-    <!-- APRESENTAÇÃO -->
-    <section class="hero">
+  <main id="conteudo">
+    <section class="container hero" aria-labelledby="titulo-inicio">
       <div>
-        <span class="eyebrow">
-          SUA OPINIÃO FAZ A DIFERENÇA
-        </span>
-
-        <h1>
-          Um atendimento melhor começa com
-          <em>você.</em>
-        </h1>
-
-        <p>
-          Avalie os serviços da nossa instituição
-          sem precisar se identificar.
-          Sua participação ajuda a transformar
-          experiências em melhorias.
-        </p>
-
-        <a class="btn primary" href="#avaliar">
-          Fazer avaliação
-          <span aria-hidden="true">→</span>
-        </a>
+        <span class="etiqueta">Sua opinião faz a diferença</span>
+        <h1 id="titulo-inicio">Um atendimento melhor começa com a sua avaliação</h1>
       </div>
-
-      <div class="hero-art" aria-hidden="true">
-        <div class="art-icon">★</div>
-        <div class="art-stars">★★★★★</div>
-        <strong>Sua voz importa</strong>
-        <span>Avaliações simples, melhorias reais.</span>
-      </div>
+      <p>
+        Avalie os serviços da instituição em menos de um minuto, sem cadastro e sem se identificar.
+        As notas viram indicadores para a equipe melhorar o que precisa.
+      </p>
+      <a class="btn btn-primaria" href="#avaliar">Fazer avaliação</a>
     </section>
 
-    <!-- RESUMO -->
-    <section class="stats" aria-label="Resumo">
-      <article>
+    <section class="container metricas" aria-label="Resumo">
+      <article class="metrica">
         <span>Avaliações registradas</span>
         <strong id="total">0</strong>
       </article>
-
-      <article>
-        <span>Serviços disponíveis</span>
-        <strong id="serviceCount">4</strong>
+      <article class="metrica">
+        <span>Serviços avaliados</span>
+        <strong id="serviceCount">0</strong>
       </article>
-
-      <article>
+      <article class="metrica">
         <span>Privacidade</span>
         <strong>Sem cadastro</strong>
       </article>
     </section>
 
-    <section class="content-grid">
-
-      <!-- FORMULÁRIO -->
-      <section class="panel" id="avaliar">
-        <div class="section-heading">
-          <span class="eyebrow">PARTICIPE</span>
-          <h2>Avalie um serviço</h2>
-
-          <p>
-            Leva menos de um minuto.
-            Não solicitamos dados de identificação.
-          </p>
+    <div class="container grade">
+      <section class="painel" id="avaliar" aria-labelledby="titulo-avaliar">
+        <div class="painel-titulo">
+          <div>
+            <h2 id="titulo-avaliar">Avalie um serviço</h2>
+            <p>Não pedimos nenhum dado de identificação.</p>
+          </div>
         </div>
 
-        <form id="reviewForm">
-
-          <label for="service">
-            Qual serviço deseja avaliar?
-          </label>
-
-          <select id="service" name="service" required>
-            <option value="">Selecione um serviço</option>
-            <option value="1">Secretaria</option>
-            <option value="2">Biblioteca</option>
-            <option value="3">Cantina</option>
-            <option value="4">Laboratórios</option>
-          </select>
-
-          <label id="ratingLabel">
-            Como foi seu atendimento?
-          </label>
-
-          <div
-            class="stars"
-            id="stars"
-            role="group"
-            aria-labelledby="ratingLabel"
-          >
-            <button
-              type="button"
-              data-score="1"
-              aria-label="1 estrela"
-            >★</button>
-
-            <button
-              type="button"
-              data-score="2"
-              aria-label="2 estrelas"
-            >★</button>
-
-            <button
-              type="button"
-              data-score="3"
-              aria-label="3 estrelas"
-            >★</button>
-
-            <button
-              type="button"
-              data-score="4"
-              aria-label="4 estrelas"
-            >★</button>
-
-            <button
-              type="button"
-              data-score="5"
-              aria-label="5 estrelas"
-            >★</button>
+        <form id="reviewForm" method="post" action="/api/avaliacoes" novalidate>
+          <div class="campo">
+            <label for="service">Qual serviço você quer avaliar?</label>
+            <select id="service" name="service" required>
+              <option value="">Selecione um serviço</option>
+              <option value="1">Secretaria</option>
+              <option value="2">Biblioteca</option>
+              <option value="3">Cantina</option>
+              <option value="4">Laboratórios</option>
+            </select>
           </div>
 
-          <div class="rating-hint" id="ratingHint">
-            Selecione de 1 a 5 estrelas
+          <fieldset class="campo" aria-describedby="ratingHint">
+            <legend>Como foi o atendimento?</legend>
+            <div class="estrelas">
+              <input type="radio" name="nota" id="nota-1" value="1">
+              <label for="nota-1"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/></svg><span class="sr-only">1 estrela</span></label>
+              <input type="radio" name="nota" id="nota-2" value="2">
+              <label for="nota-2"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/></svg><span class="sr-only">2 estrelas</span></label>
+              <input type="radio" name="nota" id="nota-3" value="3">
+              <label for="nota-3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/></svg><span class="sr-only">3 estrelas</span></label>
+              <input type="radio" name="nota" id="nota-4" value="4">
+              <label for="nota-4"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/></svg><span class="sr-only">4 estrelas</span></label>
+              <input type="radio" name="nota" id="nota-5" value="5">
+              <label for="nota-5"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/></svg><span class="sr-only">5 estrelas</span></label>
+            </div>
+            <p id="ratingHint" class="dica">Selecione de 1 a 5 estrelas</p>
+          </fieldset>
+
+          <div class="campo">
+            <label for="comment">Comentário <span class="opcional">(opcional)</span></label>
+            <textarea id="comment" name="comment" maxlength="280" rows="4"
+              aria-describedby="commentHelp" placeholder="Conte como foi a sua experiência"></textarea>
+            <div class="contador">
+              <span id="commentHelp">Não escreva dados pessoais no comentário.</span>
+              <span id="chars">0/280</span>
+            </div>
           </div>
 
-          <label for="comment">
-            Comentário
-            <span class="muted">(opcional)</span>
-          </label>
-
-          <textarea
-            id="comment"
-            name="comment"
-            maxlength="280"
-            rows="4"
-            placeholder="Conte como foi sua experiência..."
-          ></textarea>
-
-          <div class="counter">
-            <span>Não informe dados pessoais no comentário.</span>
-            <span id="chars">0/280</span>
-          </div>
-
-          <button
-            class="btn primary full"
-            type="submit"
-          >
-            Enviar avaliação
-          </button>
-
-          <p
-            id="formMessage"
-            class="message"
-            role="status"
-            aria-live="polite"
-          ></p>
+          <button class="btn btn-primaria btn-bloco" type="submit">Enviar avaliação</button>
+          <p id="formMessage" class="mensagem" role="status" aria-live="polite"></p>
         </form>
       </section>
 
-      <!-- INDICADORES -->
-      <section class="panel" id="painel">
-        <div class="section-heading">
-          <span class="eyebrow">TRANSPARÊNCIA</span>
-          <h2>Painel por serviço</h2>
-
-          <p>
-            Médias aparecem apenas a partir
-            de três avaliações.
-          </p>
+      <section class="painel" id="painel" aria-labelledby="titulo-painel">
+        <div class="painel-titulo">
+          <div>
+            <h2 id="titulo-painel">Painel por serviço</h2>
+            <p>A média só aparece a partir de três avaliações.</p>
+          </div>
         </div>
 
-        <div id="services" class="service-list"></div>
+        <ul id="services" class="lista-servicos" aria-live="polite">
+          <li class="esqueleto" aria-hidden="true"></li>
+        </ul>
       </section>
-    </section>
-
-    <!-- COMENTÁRIOS PÚBLICOS -->
-    <section class="panel comments-panel">
-      <div class="section-heading">
-        <span class="eyebrow">COMENTÁRIOS</span>
-        <h2>Experiências compartilhadas</h2>
-
-        <p>
-          Comentários ocultados pela moderação
-          deixam de ser exibidos publicamente,
-          mas suas notas continuam nas estatísticas.
-        </p>
-      </div>
-
-      <div id="comments" class="comments"></div>
-    </section>
-
-  </main>
-
-  <!-- RODAPÉ -->
-  <footer>
-    <div>
-      Grupo 1 · SENAC · Cloud Challenge 2026.2
     </div>
 
-    <span>
-      Equipe 1 / Tema 13:
-      Antônio Enzo, Emmanuel Luis, Everson,
-      José AllanBerg e Marcelo Barbosa.
-    </span>
+    <section class="container" aria-labelledby="titulo-comentarios">
+      <div class="painel">
+        <div class="painel-titulo">
+          <div>
+            <h2 id="titulo-comentarios">Comentários públicos</h2>
+            <p>Comentários ocultados pela moderação saem desta lista, mas as notas continuam nos indicadores.</p>
+          </div>
+        </div>
 
-    <div class="footer-admin">
-      <a
-        href="admin-login.html"
-        aria-label="Acessar área administrativa"
-      >
-        Área Administrativa
-      </a>
+        <ul id="comments" class="lista-comentarios"></ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="rodape">
+    <div class="container">
+      <span>Grupo 1 · SENAC · Cloud Challenge 2026.2</span>
+      <a href="admin-login.html">Área do gestor</a>
     </div>
   </footer>
 
-  <!-- SCRIPTS -->
   <script src="js/config.js" defer></script>
   <script src="js/api.js" defer></script>
   <script src="js/script.js" defer></script>
   <script src="js/pwa.js" defer></script>
-
 </body>
 </html>
