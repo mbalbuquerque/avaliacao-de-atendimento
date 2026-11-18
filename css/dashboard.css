@@ -344,3 +344,9 @@ footer {
     height: 270px;
   }
 }
+
+.demo-notice.error {
+  background: #FDECEA;
+  border-color: #F5C2BD;
+  color: #8A1C12;
+}

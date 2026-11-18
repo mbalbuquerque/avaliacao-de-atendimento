@@ -1,5 +1,7 @@
 
-const CACHE_NAME = "avalie-atendimento-v1";
+// Troque o número da versão a cada mudança do front-end: o service worker novo
+// apaga o cache antigo e o navegador deixa de servir arquivos velhos.
+const CACHE_NAME = "avalie-atendimento-v2";
 
 const APP_SHELL = [
   "./",
@@ -7,6 +9,8 @@ const APP_SHELL = [
   "./offline.html",
   "./css/style.css",
   "./css/pwa.css",
+  "./js/config.js",
+  "./js/api.js",
   "./js/script.js",
   "./js/pwa.js",
   "./manifest.webmanifest",
@@ -36,16 +40,27 @@ self.addEventListener("activate", event => {
   );
 });
 
+// Rotas que o service worker nunca toca: dados da API, saúde do servidor e a
+// área do gestor. Assim nada disso é servido do cache nem confirma envio falso.
+function isNeverCached(url) {
+  return (
+    url.pathname.includes("/api/") ||
+    url.pathname.endsWith("/health") ||
+    url.pathname.endsWith("/admin.html") ||
+    url.pathname.endsWith("/admin-login.html")
+  );
+}
+
 self.addEventListener("fetch", event => {
   const request = event.request;
 
+  // POST (envio da avaliação) vai direto à rede: sem rede, falha de verdade.
   if (request.method !== "GET") return;
 
   const url = new URL(request.url);
 
-  // Não armazenar respostas da API ou de outros domínios.
   if (url.origin !== self.location.origin) return;
-  if (url.pathname.includes("/api/")) return;
+  if (isNeverCached(url)) return;
 
   if (request.mode === "navigate") {
     event.respondWith(
@@ -59,9 +74,9 @@ self.addEventListener("fetch", event => {
     return;
   }
 
+  // Rede primeiro: depois de um deploy o usuário recebe o arquivo novo.
+  // O cache só atende quando está sem conexão.
   event.respondWith(
-    caches.match(request).then(cached => {
-      return cached || fetch(request);
-    })
+    fetch(request).catch(() => caches.match(request))
   );
 });

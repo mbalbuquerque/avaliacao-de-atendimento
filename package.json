@@ -1,0 +1,24 @@
+{
+  "name": "avalie-o-atendimento",
+  "version": "1.0.0",
+  "description": "Avalie o Atendimento: avaliações anônimas com indicadores por serviço (Cloud Challenge, desafio 13).",
+  "private": true,
+  "main": "server.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --env-file=.env server.js",
+    "test": "node --test",
+    "banco": "node scripts/setup-db.js",
+    "hash": "node scripts/gerar-hash.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.2.17"
+  }
+}

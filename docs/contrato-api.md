@@ -1,8 +1,8 @@
 # Contrato de API — Avalie o Atendimento
 
 **Projeto:** Cloud Challenge — Grupo 1  
-**Versão:** 1.0 — Proposta para validação da equipe  
-**Status:** Planejamento de integração
+**Versão:** 1.1 — Implementado no back-end e coberto por testes automatizados  
+**Status:** API implementada (`src/app.js`, testes em `tests/api.test.js`). Integração do painel do gestor em andamento; implantação na Azure pendente.
 
 ## 1. Objetivo
 
@@ -24,6 +24,8 @@ O sistema permitirá avaliações anônimas dos serviços institucionais e a vis
 - Os dados devem persistir no PostgreSQL.
 
 ## 3. Endpoints públicos
+
+> **Formato dos erros:** toda resposta de erro vem em JSON com o campo `message` (e `erros`, na validação). Nenhum erro expõe detalhe interno (host, SQL, mensagem do driver).
 
 ### GET `/api/servicos`
 
@@ -77,6 +79,7 @@ Validações obrigatórias:
 | Comentário de 281 caracteres | HTTP 400 |
 | Serviço inexistente | HTTP 404 |
 | Banco indisponível | HTTP 503 |
+| Muitas avaliações do mesmo IP em 1 minuto (limite de 30, só em memória, sem gravar o IP) | HTTP 429 |
 
 ### GET `/api/indicadores`
 
@@ -146,9 +149,30 @@ Resposta HTTP 200:
 
 Autentica um gestor.
 
-O formato definitivo das credenciais será definido pela equipe de backend.
+Requisição (implementada):
 
-A autenticação deverá utilizar uma sessão segura e proteger todas as rotas administrativas.
+```json
+{"usuario": "gestor", "senha": "..."}
+```
+
+- HTTP 200: `{"usuario": "gestor"}` e o cookie `sessao` (`HttpOnly`, `SameSite=Strict`, 8 horas, `Secure` quando a conexão é HTTPS).
+- HTTP 401: usuário ou senha incorretos (mesma mensagem nos dois casos).
+- HTTP 429: mais de 10 tentativas do mesmo IP em 15 minutos.
+- HTTP 503: variáveis `ADMIN_USUARIO`, `ADMIN_SENHA_HASH` e `SESSAO_SEGREDO` não configuradas (nunca libera o acesso).
+
+A senha é conferida com hash `scrypt`; a sessão é assinada com HMAC-SHA256. Todas as rotas administrativas exigem o cookie; sem ele respondem HTTP 401. Requisições de escrita com cabeçalho `Origin` de outro site recebem HTTP 403.
+
+### GET `/api/admin/me`
+
+HTTP 200 com `{"usuario": "gestor"}` ou HTTP 401.
+
+### GET `/api/admin/avaliacoes`
+
+Lista até 500 avaliações, **inclusive as ocultas**, com `id`, `servico`, `nota`, `comentario`, `oculta` e `criada_em`. HTTP 401 sem sessão.
+
+### POST `/api/admin/logout`
+
+Encerra a sessão (apaga o cookie). HTTP 200.
 
 ### PATCH `/api/admin/avaliacoes/{id}`
 
@@ -168,7 +192,8 @@ Respostas previstas:
 
 - HTTP 200: alteração concluída.
 - HTTP 401: gestor não autenticado.
-- HTTP 403: acesso não autorizado.
+- HTTP 400: `oculta` não é booleano ou o identificador não é numérico.
+- HTTP 403: requisição de outra origem (cabeçalho `Origin` diferente do site).
 - HTTP 404: avaliação inexistente.
 
 ## 5. Monitoramento
@@ -182,11 +207,14 @@ Exemplo de resposta HTTP 200:
 ```json
 {
   "status": "ok",
-  "database": "connected"
+  "database": "connected",
+  "iniciado_em": "2026-11-18T21:00:00.000Z"
 }
 ```
 
-Se o banco estiver indisponível, a API deverá retornar HTTP 503.
+`iniciado_em` muda a cada início da aplicação e serve de prova de reinício na demonstração de persistência.
+
+Se o banco estiver indisponível, a API retorna HTTP 503 com `{"status": "erro", "database": "unavailable", "iniciado_em": "..."}`.
 
 ## 6. Segurança e anonimato
 

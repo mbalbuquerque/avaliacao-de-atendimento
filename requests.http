@@ -1,0 +1,158 @@
+### Avalie o Atendimento: coleção de requisições (extensão REST Client do VS Code)
+### Escolha o ambiente trocando a variável @base abaixo.
+### Dados fictícios: nenhuma requisição leva nome, e-mail ou matrícula.
+
+@local = http://localhost:3000
+@azure = https://SUA-URL.azurewebsites.net
+@base = {{local}}
+
+@json = application/json
+
+
+############################################################
+# Saúde
+############################################################
+
+### Health: confirma a aplicação e a conexão real com o banco
+GET {{base}}/health
+
+
+############################################################
+# Público
+############################################################
+
+### Serviços (RF01): devem vir Secretaria, Biblioteca, Cantina e Laboratórios
+GET {{base}}/api/servicos
+
+### Avaliação válida: espera 201
+POST {{base}}/api/avaliacoes
+Content-Type: {{json}}
+
+{
+  "servico_id": 1,
+  "nota": 5,
+  "comentario": "Atendimento rápido e organizado."
+}
+
+### Avaliação sem comentário: espera 201 (o comentário é opcional)
+POST {{base}}/api/avaliacoes
+Content-Type: {{json}}
+
+{
+  "servico_id": 2,
+  "nota": 4
+}
+
+### CA1: nota 0: espera 400
+POST {{base}}/api/avaliacoes
+Content-Type: {{json}}
+
+{
+  "servico_id": 1,
+  "nota": 0
+}
+
+### CA1: nota 6: espera 400
+POST {{base}}/api/avaliacoes
+Content-Type: {{json}}
+
+{
+  "servico_id": 1,
+  "nota": 6
+}
+
+### CA1: nota 3.5: espera 400
+POST {{base}}/api/avaliacoes
+Content-Type: {{json}}
+
+{
+  "servico_id": 1,
+  "nota": 3.5
+}
+
+### CA2: comentário com 281 caracteres: espera 400
+POST {{base}}/api/avaliacoes
+Content-Type: {{json}}
+
+{
+  "servico_id": 1,
+  "nota": 5,
+  "comentario": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+}
+
+### Serviço inexistente: espera 404
+POST {{base}}/api/avaliacoes
+Content-Type: {{json}}
+
+{
+  "servico_id": 99,
+  "nota": 5
+}
+
+### Indicadores (CA3 e CA4): média com 1 casa; menos de 3 avaliações vem com media null
+GET {{base}}/api/indicadores
+
+### Comentários públicos (só os não ocultos)
+GET {{base}}/api/comentarios
+
+
+############################################################
+# Gestor (moderação)
+# O login grava o cookie "sessao" (HttpOnly). O REST Client guarda o cookie
+# entre as requisições, então rode o login antes das demais.
+# Troque usuário e senha pelos valores configurados no ambiente.
+############################################################
+
+### Login do gestor: espera 200 e cookie de sessão
+POST {{base}}/api/admin/login
+Content-Type: {{json}}
+
+{
+  "usuario": "gestor",
+  "senha": "SENHA-DO-GESTOR"
+}
+
+### Login com senha errada: espera 401
+POST {{base}}/api/admin/login
+Content-Type: {{json}}
+
+{
+  "usuario": "gestor",
+  "senha": "senha-errada"
+}
+
+### Sessão atual: espera 200 (401 sem login)
+GET {{base}}/api/admin/me
+
+### Todas as avaliações, inclusive as ocultas
+GET {{base}}/api/admin/avaliacoes
+
+### CA5: ocultar um comentário (troque o 1 pelo id da avaliação): espera 200
+PATCH {{base}}/api/admin/avaliacoes/1
+Content-Type: {{json}}
+
+{
+  "oculta": true
+}
+
+### Reexibir o comentário
+PATCH {{base}}/api/admin/avaliacoes/1
+Content-Type: {{json}}
+
+{
+  "oculta": false
+}
+
+### Avaliação inexistente na moderação: espera 404
+PATCH {{base}}/api/admin/avaliacoes/999999
+Content-Type: {{json}}
+
+{
+  "oculta": true
+}
+
+### Encerrar a sessão
+POST {{base}}/api/admin/logout
+Content-Type: {{json}}
+
+{}
