@@ -1,20 +1,9 @@
 
 /*
  * Dashboard de indicadores.
- * Modo API: lê GET /api/indicadores (média, quantidade e distribuição calculadas
- * pelo PostgreSQL). Modo demo: calcula a partir do localStorage deste navegador.
+ * Lê GET /api/indicadores: média, quantidade e distribuição são calculadas
+ * pelo PostgreSQL. Nada é guardado nem calculado a partir do navegador.
  */
-
-const STORAGE_KEY = "cloud-challenge-avaliacoes-demo-v1";
-
-const API_MODE = window.APP_CONFIG?.mode === "api";
-
-const SERVICES = [
-  { id: 1, name: "Secretaria" },
-  { id: 2, name: "Biblioteca" },
-  { id: 3, name: "Cantina" },
-  { id: 4, name: "Laboratórios" }
-];
 
 const COLORS = [
   "#0482C2",
@@ -43,97 +32,38 @@ function escapeHTML(value) {
 }
 
 /* ---------------------------------------------------------------
-   Origem dos dados
+   Dados do servidor
 --------------------------------------------------------------- */
 
-function loadReviews() {
-  try {
-    const data = JSON.parse(
-      localStorage.getItem(STORAGE_KEY) || "[]"
-    );
-
-    return Array.isArray(data)
-      ? data.filter(item =>
-          Number.isInteger(item.score) &&
-          item.score >= 1 &&
-          item.score <= 5 &&
-          SERVICES.some(service => service.id === item.serviceId)
-        )
-      : [];
-  } catch {
-    return [];
-  }
-}
-
-// Demo: estatísticas calculadas no navegador.
-function calculateLocalStatistics(reviews) {
-  return SERVICES.map(service => {
-    const items = reviews.filter(
-      review => review.serviceId === service.id
-    );
-
-    const count = items.length;
-
-    const sum = items.reduce(
-      (total, review) => total + review.score,
-      0
-    );
-
-    const distribution = [1, 2, 3, 4, 5].map(
-      score => items.filter(item => item.score === score).length
-    );
-
-    return {
-      ...service,
-      count,
-      average: count >= 3 ? sum / count : null,
-      distribution
-    };
-  });
-}
-
-// API: converte o contrato (indicadores por serviço) para o formato das telas.
+// Converte o contrato (indicadores por serviço) para o formato das telas.
 function statisticsFromAPI(data) {
   if (!Array.isArray(data)) {
     throw new Error("Formato de indicadores inválido.");
   }
 
-  return SERVICES.map(service => {
-    const item = data.find(
-      entry => Number(entry.servico_id) === service.id
-    );
-
-    const count = Number(item?.quantidade ?? 0);
+  return data.map(item => {
+    const count = Number(item.quantidade ?? 0);
 
     const sufficient =
-      count >= 3 && item?.amostra_suficiente === true;
+      count >= 3 && item.amostra_suficiente === true;
 
     const average = sufficient && item.media !== null
       ? Number(item.media)
       : null;
 
     return {
-      ...service,
+      id: Number(item.servico_id),
+      name: item.nome,
       count,
       average: Number.isFinite(average) ? average : null,
       distribution: [1, 2, 3, 4, 5].map(
-        note => Number(item?.distribuicao?.[String(note)] ?? 0)
+        note => Number(item.distribuicao?.[String(note)] ?? 0)
       )
     };
   });
 }
 
 async function loadStatistics() {
-  if (!API_MODE) {
-    return calculateLocalStatistics(loadReviews());
-  }
-
-  if (typeof AvalieAPI === "undefined") {
-    throw new Error(
-      "A camada de integração com a API não foi carregada."
-    );
-  }
-
   return statisticsFromAPI(await AvalieAPI.buscarIndicadores());
 }
 
@@ -333,9 +263,7 @@ async function refreshDashboard() {
     lastStats = await loadStatistics();
 
     setNotice(
-      API_MODE
-        ? "Dados do servidor (PostgreSQL), atualizados a cada 30 segundos."
-        : "Dados locais de demonstração, guardados só neste navegador."
+      "Dados do servidor (PostgreSQL), atualizados a cada 30 segundos."
     );
 
     renderDashboard();
@@ -352,14 +280,6 @@ async function refreshDashboard() {
 $("serviceFilter").addEventListener("change", renderDashboard);
 $("refreshButton").addEventListener("click", refreshDashboard);
 
-if (!API_MODE) {
-  window.addEventListener("storage", event => {
-    if (event.key === STORAGE_KEY) {
-      refreshDashboard();
-    }
-  });
-} else {
-  setInterval(refreshDashboard, ATUALIZAR_A_CADA_MS);
-}
+setInterval(refreshDashboard, ATUALIZAR_A_CADA_MS);
 
 refreshDashboard();
