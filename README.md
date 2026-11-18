@@ -30,11 +30,12 @@ uma média enganosa. O gestor pode ocultar comentários impróprios sem alterar 
 | Painel (formulário, dashboard, tela do gestor) integrado à API | **Concluído**; o modo demonstração e todo o `localStorage` de avaliações foram **removidos** (#15) |
 | Implantação na Azure (Nível A) | **Implantado** em https://app-cloud-g01-en.azurewebsites.net (App Service Linux F1, Node 22 LTS, e PostgreSQL 16 Flexible Server B1ms, Brazil South); `/health` responde 200 com `database: connected`; HTTPS obrigatório; usuário do banco da aplicação com privilégios mínimos |
 | CI (lint, testes com cobertura, PostgreSQL 16 real, auditoria, CodeQL, Gitleaks, ZAP semanal) | **Em funcionamento** (seção 8) |
-| CD (deploy automático) | **Workflow real, aguardando um segredo**: a cada push na `main` ele testa e, com o segredo `AZURE_WEBAPP_PUBLISH_PROFILE`, publica no App Service e confere o `/health`. Sem o segredo o job de publicação aparece como **ignorado** (nunca verde sem ter publicado). Falta um administrador do repositório cadastrar o segredo (#18); o deploy atual foi feito com `az webapp deploy` |
+| CD (deploy automático) | **Em funcionamento** (#18, fechada): a cada push na `main` o `deploy.yml` testa, publica no App Service e confere o `/health`. O segredo `AZURE_WEBAPP_PUBLISH_PROFILE` está cadastrado e a publicação foi provada em execução real (testar, segredo, publicar e `/health` com sucesso) |
 | Cabeçalhos de segurança (CSP restritiva, HSTS, anti-clickjacking, COOP/CORP/COEP, Permissions-Policy), limite geral de requisições e Chart.js local | **Aplicados** (#14), com testes que leem o HTML e o JavaScript do front para provar que ele funciona sob a CSP |
 | Redesenho de todas as telas (tokens, tema claro e escuro, acessibilidade, formulários com `method="post"`) e DOM sem `innerHTML` | **Concluídos** (#22, #36) |
 | Testes ponta a ponta do painel em navegador (Playwright, Chromium) | **27 testes** (#17) contra a aplicação real, sob a CSP verdadeira, com PostgreSQL 16 real no CI: formulário, amostra insuficiente, validação, sem rede, login, moderação, sair, XSS, acessibilidade e formulários sem JavaScript |
-| Prova de persistência com a palavra do dia, teste do professor e pitch de 90 s | **Pendentes** (#21; roteiro e scripts em `evidencias/`) |
+| Evidências de QA (E1, E3, E5 e Desafio 13) e ensaio da prova de persistência (E2, palavra `G01-ENSAIO`) | **Versionadas** em `evidencias/qa/` e `evidencias/ensaio-persistencia/` (#5, fechada) |
+| Prova de persistência com a palavra do dia, teste do professor (`PROF-HHMM`) e pitch de 90 s | **Dependem da aula** (#21; roteiro e scripts em `evidencias/`) |
 
 Nível de implantação: a meta é o **Nível A**, que está alcançado. Se a infraestrutura bloquear por 15 minutos,
 o grupo desce para o Nível B ou C e registra o motivo no painel da turma.
@@ -261,12 +262,10 @@ O que cada varredura cobre e o que **não** cobre está em [docs/relatorio-segur
 e em [docs/seguranca.md](docs/seguranca.md).
 
 **CD (deploy automático):** o workflow `deploy.yml` roda a cada push na `main`, repete lint e testes e, **se
-o segredo `AZURE_WEBAPP_PUBLISH_PROFILE` existir**, publica no App Service e confere o `/health`. **Esse
-segredo ainda não foi cadastrado**: cadastrar segredo do repositório exige permissão de administrador, que
-quem implantou não tem, e o grupo precisa decidir quem o faz (issue #18). Enquanto isso o job "Publicar no App Service" aparece como
-**ignorado** na aba Actions, com um resumo explicando o motivo, e o deploy da produção atual foi feito manualmente
-com `az webapp deploy`. Como
-cadastrar o segredo: seção "Deploy automático" de [docs/implantacao-azure.md](docs/implantacao-azure.md).
+o segredo `AZURE_WEBAPP_PUBLISH_PROFILE` existir**, publica no App Service e confere o `/health`. O segredo está
+cadastrado no repositório e a publicação foi provada em execução real (issue #18). Sem o segredo o job de
+publicação aparece como **ignorado**, nunca verde sem ter publicado. Como o segredo é gerado e cadastrado:
+seção "Deploy automático" de [docs/implantacao-azure.md](docs/implantacao-azure.md).
 
 ## 9. Segurança e configuração
 
@@ -306,12 +305,12 @@ no GitHub), o CI precisa passar e só então há o merge. Os commits são pequen
 | #25 | Log de requisições sem dados pessoais | #16 |
 | #26 | Remoção do modo demonstração e do `localStorage` | #15 |
 | #27 | Testes de segurança (acharam e corrigiram um erro 500 com cookie inválido) | #13 |
-| #28 | Workflow de deploy (aguarda o segredo) | #18 (aberta) |
-| este PR | Documentação final | #20 |
+| #28 | Workflow de deploy | #18 |
+| #54, #58 | Front sem `innerHTML`, redesenho de todas as telas e identidade visual do Stitch com contraste AA | #36, #22 |
+| #60 | Evidências de QA e ensaio da prova de persistência | #5 |
 
-Ainda abertas: #18 (segredo do deploy), #21 (prova de persistência e evidências), #5 (QA) e #8
-(acompanhamento do professor). As entregas de dados e desenvolvimento foram concluídas e suas
-issues foram fechadas após a revisão técnica.
+Abertas: #21 (prova de persistência com a palavra do dia, depende da aula) e #8 (acompanhamento do professor). As demais
+issues foram fechadas com o PR que as resolveu e as branches mescladas foram apagadas.
 
 ## 11. Dificuldade superada
 
@@ -347,8 +346,7 @@ Outras dificuldades reais da implantação, resolvidas na mesma sessão:
 ## 12. Limitações conhecidas e próximos passos
 
 **Limitações:**
-- Faltam os prints da prova de persistência (E2), que dependem da palavra do dia, e o teste do professor (PROF-HHMM).
-- O deploy automático está desligado até alguém com permissão de administrador cadastrar o segredo (#18).
+- Falta a prova de persistência com a palavra do dia (E2) e o teste do professor (PROF-HHMM), que dependem da aula; o ensaio com `G01-ENSAIO` já valida o roteiro.
 - A varredura ZAP posterior às correções registrou 0 alertas altos; permanecem apenas avisos
   informativos a acompanhar em versões futuras.
 - Um único gestor, definido por variáveis de ambiente, sem cadastro, sem recuperação de senha e sem segundo fator.
@@ -363,9 +361,9 @@ Outras dificuldades reais da implantação, resolvidas na mesma sessão:
   (inserir e ocultar permitidos; alterar nota, apagar e derrubar tabela bloqueados).
 - Os testes e2e rodam só no Chromium (sem Firefox, Safari nem celular real) e sem alta disponibilidade do banco (um servidor B1ms).
 
-**Próximos passos:** registrar a prova de persistência com o `G01-PALAVRA` do dia (roteiro em `evidencias/`); gravar
-o pitch de 90 segundos; fechar as issues #18 e #21; parar o
-servidor PostgreSQL ao final da aula e excluir o grupo de recursos `rg-cloud-g01` na data indicada pelo professor.
+**Próximos passos:** na aula, registrar a prova de persistência com o `G01-PALAVRA` anunciado (roteiro em `evidencias/`);
+gravar o pitch de 90 segundos; fechar a issue #21; parar o servidor PostgreSQL ao final da aula e excluir o grupo de
+recursos `rg-cloud-g01` na data indicada pelo professor.
 
 ## 13. Equipe e responsabilidades
 
@@ -396,8 +394,8 @@ Todos os integrantes devem saber explicar o fluxo completo da aplicação.
 │   ├── dados-demonstracao.sql  20 avaliações fictícias (carga opcional)
 │   └── permissoes.sql        usuário da aplicação com privilégios mínimos
 ├── scripts/                  preparar o banco e gerar o hash da senha do gestor
-├── tests/                    testes automatizados (API, segurança e log)
-├── evidencias/               prints (E1 a E6) e scripts da prova de persistência
+├── tests/                    testes automatizados (API, segurança, log, CSP, XSS, config) e e2e/ (Playwright)
+├── evidencias/               E1 a E6: qa/ (E1, E3, E5, Desafio 13), ensaio-persistencia/ (E2) e scripts da prova
 ├── docs/                     contrato, regras de negócio, segurança, relatório das varreduras e implantação
 ├── requests.http             requisições prontas (REST Client)
 ├── .github/
