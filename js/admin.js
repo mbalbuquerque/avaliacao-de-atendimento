@@ -1,3 +1,4 @@
+/* global el, preencher */
 
 /*
  * AVALIE O ATENDIMENTO
@@ -13,19 +14,6 @@ const $ = id => document.getElementById(id);
 
 // Lista do mais antigo para o mais novo; a tela mostra o inverso.
 let comments = [];
-
-function escapeHTML(value) {
-  return String(value ?? "").replace(
-    /[&<>"']/g,
-    char => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;"
-    }[char])
-  );
-}
 
 function showMessage(message, type = "") {
   const element = $("adminMessage");
@@ -157,51 +145,38 @@ function renderComments() {
   const filtered = getFilteredComments();
 
   if (!filtered.length) {
-    container.innerHTML = `
-      <p class="vazio">
-        Nenhum comentário encontrado para os filtros escolhidos.
-      </p>
-    `;
+    preencher(
+      container,
+      el("p", { class: "vazio" }, "Nenhum comentário encontrado para os filtros escolhidos.")
+    );
     return;
   }
 
-  container.innerHTML = filtered.map(item => {
+  preencher(container, filtered.map(item => {
     const serviceName = item.serviceName || "Serviço";
 
     const score = Math.max(0, Math.min(5, Number(item.score) || 0));
 
     const hidden = item.hidden === true;
 
-    return `
-      <article class="cartao-comentario${hidden ? " cartao-comentario--oculto" : ""}">
-        <header>
-          <div>
-            <strong>${escapeHTML(serviceName)}</strong>
-            <div class="nota-estrelas" role="img"
-              aria-label="Nota ${score} de 5">${"★".repeat(score)}${"☆".repeat(5 - score)}</div>
-          </div>
-
-          <span class="selo ${hidden ? "selo--aviso" : "selo--ok"}">
-            ${hidden ? "Oculto" : "Visível"}
-          </span>
-        </header>
-
-        <p>${escapeHTML(item.comment)}</p>
-
-        <footer>
-          <span class="texto-apoio">A nota continua nos indicadores.</span>
-
-          <button
-            type="button"
-            class="btn btn-secundaria"
-            data-id="${escapeHTML(item.id)}"
-          >
-            ${hidden ? "Reexibir" : "Ocultar"}
-          </button>
-        </footer>
-      </article>
-    `;
-  }).join("");
+    return el("article",
+      { class: `cartao-comentario${hidden ? " cartao-comentario--oculto" : ""}` },
+      el("header", null,
+        el("div", null,
+          el("strong", null, serviceName),
+          el("div",
+            { class: "nota-estrelas", role: "img", "aria-label": `Nota ${score} de 5` },
+            "★".repeat(score) + "☆".repeat(5 - score))),
+        el("span",
+          { class: `selo ${hidden ? "selo--aviso" : "selo--ok"}` },
+          hidden ? "Oculto" : "Visível")),
+      el("p", null, item.comment),
+      el("footer", null,
+        el("span", { class: "texto-apoio" }, "A nota continua nos indicadores."),
+        el("button",
+          { type: "button", class: "btn btn-secundaria", "data-id": String(item.id) },
+          hidden ? "Reexibir" : "Ocultar")));
+  }));
 }
 
 function render() {
@@ -324,11 +299,10 @@ async function initialize() {
     await loadAPIComments();
   } catch (error) {
     $("modeBadge").textContent = "Sem acesso";
-    $("commentsList").innerHTML = `
-      <p class="vazio">
-        Não foi possível abrir a moderação.
-      </p>
-    `;
+    preencher(
+      $("commentsList"),
+      el("p", { class: "vazio" }, "Não foi possível abrir a moderação.")
+    );
 
     handleAPIError(
       error,
