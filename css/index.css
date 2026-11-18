@@ -5,7 +5,7 @@
   display: grid;
   gap: var(--e4);
   margin-top: var(--e5);
-  padding: clamp(2rem, 5vw, 5rem);
+  padding: clamp(2rem, 4vw, 3.25rem);
   border-radius: var(--r-lg);
   overflow: hidden;
   background:
@@ -39,6 +39,10 @@
   border-color: rgb(255 255 255 / 26%);
   background: rgb(255 255 255 / 12%);
   color: #fffefb;
+}
+
+.hero + .metricas {
+  margin-top: var(--e5);
 }
 
 .grade {
