@@ -1,3 +1,4 @@
+/* exported AvalieAPI */
 
 /*
  * Avalie o Atendimento

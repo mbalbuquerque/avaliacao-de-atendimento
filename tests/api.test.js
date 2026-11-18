@@ -2,7 +2,7 @@
 // Rodar: npm test
 // Cada teste usa um banco novo em memória, com o schema.sql real do projeto.
 
-const { test, describe, before, after, beforeEach, afterEach } = require("node:test");
+const { test, describe, beforeEach, afterEach } = require("node:test");
 const assert = require("node:assert/strict");
 const { criarBancoDeTeste, iniciar, logarGestor, ADMIN, SENHA_GESTOR } = require("./ajuda");
 
@@ -150,25 +150,21 @@ describe("API Avalie o Atendimento", () => {
   });
 
   test("banco fora do ar: rotas de dados e /health retornam 503 sem expor detalhes", async () => {
-    const quebrado = {
-      configurado: true,
-      async query() {
-        const e = new Error("connect ECONNREFUSED 10.0.0.5:5432 password=segredo");
-        e.code = "ECONNREFUSED";
-        throw e;
-      },
-      async fechar() {}
-    };
-    const apiQuebrada = await iniciar(quebrado);
+    // Conexão real recusada (porta 1 não tem PostgreSQL): o erro vem do driver, não de um objeto falso.
+    const { criarBanco } = require("../src/db");
+    const semBanco = criarBanco("postgres://usuario:senha-secreta@127.0.0.1:1/avaliacao");
+    const apiSemBanco = await iniciar(semBanco);
     try {
       for (const rota of ["/api/servicos", "/api/indicadores", "/api/comentarios", "/health"]) {
-        const r = await apiQuebrada.get(rota);
+        const r = await apiSemBanco.get(rota);
         assert.equal(r.status, 503, rota);
-        assert.doesNotMatch(JSON.stringify(r.json), /ECONNREFUSED|10\.0\.0\.5|segredo|password/);
+        assert.doesNotMatch(JSON.stringify(r.json), /ECONNREFUSED|127\.0\.0\.1|senha-secreta|usuario|postgres/);
       }
-      assert.equal((await apiQuebrada.post("/api/avaliacoes", { servico_id: 1, nota: 5 })).status, 503);
+      assert.equal((await apiSemBanco.post("/api/avaliacoes", { servico_id: 1, nota: 5 })).status, 503);
+      assert.equal((await apiSemBanco.patch("/api/admin/avaliacoes/1", { oculta: true }, await logarGestor(apiSemBanco))).status, 503);
     } finally {
-      await apiQuebrada.parar();
+      await apiSemBanco.parar();
+      await semBanco.fechar();
     }
   });
 
