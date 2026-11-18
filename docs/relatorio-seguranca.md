@@ -61,3 +61,12 @@ código:** os itens do grupo A seguem para as issues #14 (cabeçalhos, CSP, Char
 - Varredura **ativa** do ZAP (full scan) autenticada como gestor, em ambiente de teste; hoje só há a passiva.
 - Confirmar nas próximas execuções semanais que os avisos do grupo A sumiram depois das issues #14 e #15.
 - Cadastrar o segredo `AZURE_WEBAPP_PUBLISH_PROFILE` (issue #18) para o deploy automático; exige permissão de administrador do repositório.
+
+## Atualização de 18/11/2026: correções aplicadas no código
+
+Os itens do grupo A foram corrigidos (issues #14, #22 e #36) e cobertos por testes automatizados:
+CSP, HSTS, anti-clickjacking, COOP/CORP/COEP e Permissions-Policy (`tests/cabecalhos.test.js`), Chart.js servido
+pelo próprio servidor, formulários com `method="post"` e front sem `innerHTML` (`tests/xss.test.js`). O CodeQL
+também apontava a falta de limite de requisições em três rotas, resolvida com um limite geral por IP. A
+confirmação final é a próxima execução do ZAP contra a versão publicada na Azure, que ainda não foi feita depois
+do deploy: até lá, estes itens constam como corrigidos no código e **não** como confirmados em produção.

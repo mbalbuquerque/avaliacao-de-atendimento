@@ -3,6 +3,8 @@
 // PostgreSQL em memória e trocar a conexão sem mexer nas rotas.
 
 const express = require("express");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 const path = require("path");
 const { validarAvaliacao } = require("./validacao");
 const auth = require("./auth");
@@ -46,9 +48,36 @@ function criarApp(db, opcoes = {}) {
   app.disable("x-powered-by");
   app.set("trust proxy", 1); // atrás do App Service: IP e https vêm dos cabeçalhos do proxy
 
+  // Cabeçalhos de segurança. A CSP só aceita recurso do próprio servidor: nenhum script ou estilo
+  // inline, nenhuma biblioteca de CDN, nenhum frame (anti-clickjacking) e formulário só para o
+  // mesmo endereço. O front-end é escrito para funcionar assim (ver tests/cabecalhos.test.js).
+  app.use(helmet({
+    contentSecurityPolicy: {
+      useDefaults: false,
+      directives: {
+        "default-src": ["'none'"],
+        "script-src": ["'self'"],
+        "style-src": ["'self'"],
+        "img-src": ["'self'", "data:"],
+        "connect-src": ["'self'"],
+        "font-src": ["'self'"],
+        "manifest-src": ["'self'"],
+        "worker-src": ["'self'"],
+        "form-action": ["'self'"],
+        "base-uri": ["'none'"],
+        "object-src": ["'none'"],
+        "frame-ancestors": ["'none'"]
+      }
+    },
+    strictTransportSecurity: { maxAge: 31536000, includeSubDomains: true },
+    referrerPolicy: { policy: "no-referrer" },
+    crossOriginOpenerPolicy: { policy: "same-origin" },
+    crossOriginResourcePolicy: { policy: "same-origin" },
+    crossOriginEmbedderPolicy: { policy: "require-corp" },
+    xFrameOptions: { action: "deny" }
+  }));
   app.use((req, res, next) => {
-    res.set("X-Content-Type-Options", "nosniff");
-    res.set("Referrer-Policy", "no-referrer");
+    res.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(), usb=()");
     if (req.path.startsWith("/api") || req.path === "/health") res.set("Cache-Control", "no-store");
     next();
   });
@@ -72,6 +101,18 @@ function criarApp(db, opcoes = {}) {
     });
     next();
   });
+
+  // Limite geral por IP (em memória, sem gravar nada): protege o banco e os arquivos contra
+  // rajadas. Os limites de login e de avaliações abaixo são mais apertados e valem por cima deste.
+  app.use(rateLimit({
+    windowMs: 60 * 1000,
+    limit: opcoes.limiteGeralPorMinuto || 600,
+    standardHeaders: "draft-7",
+    legacyHeaders: false,
+    skip: (req) => req.path === "/health",
+    message: { message: "Muitas requisições. Aguarde um minuto." }
+  }));
+
   app.use(express.json({ limit: "10kb" }));
 
   // Falha de banco: 503 sem expor detalhe interno (host, usuário, SQL, mensagem do driver).
@@ -289,11 +330,15 @@ function criarApp(db, opcoes = {}) {
     "offline.html", "manifest.webmanifest", "sw.js"];
   for (const arquivo of paginas) {
     app.get(`/${arquivo}`, (req, res) => {
-      if (arquivo === "sw.js") res.set("Cache-Control", "no-cache");
+      // Páginas, manifesto e service worker são revalidados a cada uso: deploy novo chega na hora.
+      res.set("Cache-Control", "no-cache");
       res.sendFile(path.join(RAIZ, arquivo));
     });
   }
-  app.get("/", (req, res) => res.sendFile(path.join(RAIZ, "index.html")));
+  app.get("/", (req, res) => {
+    res.set("Cache-Control", "no-cache");
+    res.sendFile(path.join(RAIZ, "index.html"));
+  });
 
   app.use((req, res) => res.status(404).type("text/plain").send("Página não encontrada."));
 
