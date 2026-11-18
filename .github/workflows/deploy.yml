@@ -1,8 +1,10 @@
 name: Deploy na Azure
 
-# A cada push na main: testa e, se o segredo AZURE_WEBAPP_PUBLISH_PROFILE existir,
-# publica no App Service e confere o /health. Sem o segredo, o job só avisa e não falha
-# (como cadastrar o segredo: docs/implantacao-azure.md, seção "Deploy automático").
+# A cada push na main: testa e publica no App Service, depois confere o /health.
+# A publicação só roda quando o segredo AZURE_WEBAPP_PUBLISH_PROFILE existe. Sem ele, o job
+# "Publicar no App Service" aparece como IGNORADO (cinza) e o resumo do workflow explica o
+# motivo: nunca fica verde sem ter publicado nada.
+# Como cadastrar o segredo: docs/implantacao-azure.md, seção "Deploy automático".
 on:
   push:
     branches: [main]
@@ -35,31 +37,42 @@ jobs:
       - run: npm run lint
       - run: npm run test:cobertura
 
-  publicar:
-    name: Publicar no App Service
-    needs: testar
+  segredo:
+    name: Verificar o segredo de publicação
     runs-on: ubuntu-latest
+    outputs:
+      disponivel: ${{ steps.verificar.outputs.disponivel }}
     steps:
-      - uses: actions/checkout@v7
-
-      - name: Verificar o segredo de publicação
-        id: segredo
+      - name: Conferir se AZURE_WEBAPP_PUBLISH_PROFILE existe
+        id: verificar
         env:
           PERFIL: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
         run: |
           if [ -z "$PERFIL" ]; then
             echo "disponivel=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Segredo AZURE_WEBAPP_PUBLISH_PROFILE não cadastrado: deploy automático ignorado."
+            {
+              echo "### Deploy automático IGNORADO"
+              echo
+              echo "O segredo \`AZURE_WEBAPP_PUBLISH_PROFILE\` não está cadastrado neste repositório,"
+              echo "então **nada foi publicado**. Os testes rodaram e passaram."
+              echo "Como habilitar: \`docs/implantacao-azure.md\`, seção \"Deploy automático\"."
+            } >> "$GITHUB_STEP_SUMMARY"
           else
             echo "disponivel=true" >> "$GITHUB_OUTPUT"
           fi
 
+  publicar:
+    name: Publicar no App Service
+    needs: [testar, segredo]
+    if: needs.segredo.outputs.disponivel == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
       - name: Empacotar o código (sem testes nem node_modules)
-        if: steps.segredo.outputs.disponivel == 'true'
         run: git archive --format=zip -o app.zip HEAD
 
       - name: Publicar
-        if: steps.segredo.outputs.disponivel == 'true'
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.APP_NOME }}
@@ -67,7 +80,6 @@ jobs:
           package: app.zip
 
       - name: Conferir o /health publicado
-        if: steps.segredo.outputs.disponivel == 'true'
         run: |
           for tentativa in $(seq 1 20); do
             resposta=$(curl -s -m 20 "$APP_URL/health" || true)
