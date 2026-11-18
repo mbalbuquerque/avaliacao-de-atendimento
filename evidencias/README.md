@@ -10,11 +10,11 @@ durante a aula; nos nomes de arquivo e nos comandos abaixo, troque `PALAVRA` por
 
 | Código | Evidência | Arquivo sugerido | Situação |
 |---|---|---|---|
-| E1 | Registro do ambiente: URL pública (Nível A) ou descrição do ambiente (Níveis B e C) | `E1-ambiente.png` | Pendente (Azure ainda não criada) |
+| E1 | Registro do ambiente: URL pública (Nível A) ou descrição do ambiente (Níveis B e C) | `E1-ambiente.png` | Aplicação Nível A publicada; print com data e hora pendente |
 | E2 | Prova de persistência: os quatro prints do registro `G01-PALAVRA` | `E2-print1-lista.png`, `E2-print2-iniciado-em-antes.png`, `E2-print3-depois-do-reinicio.png`, `E2-print4-consulta-sql.png` | Pendente |
-| E3 | Casos de teste: pelo menos 5, sendo 2 negativos, com esperado e obtido | `E3-testes.png` (saída de `npm test`) e a tabela do README | Testes passam localmente (30 de 30); print pendente |
+| E3 | Casos de teste: pelo menos 5, sendo 2 negativos, com esperado e obtido | `E3-testes.png` (saída de `npm test`) e a tabela do README | 70 testes automatizados e 16 e2e; print pendente |
 | E4 | Diagrama de arquitetura | no README (mermaid) | Pronto |
-| E5 | Configuração segura: print das variáveis de ambiente com o valor oculto e o `.gitignore` com `.env` | `E5-variaveis-ocultas.png`, `E5-gitignore.png` | Pendente (variáveis do App Service) |
+| E5 | Configuração segura: print das variáveis de ambiente com o valor oculto e o `.gitignore` com `.env` | `E5-variaveis-ocultas.png`, `E5-gitignore.png` | Variáveis já configuradas no App Service; prints pendentes |
 | E6 | README completo e link do vídeo do pitch de 90 segundos | README + `E6-pitch.txt` com o link | README pronto; vídeo pendente |
 
 Se o ambiente for o Nível C (local), o E1 é a descrição do ambiente (versões, comandos) com prints do
@@ -59,7 +59,7 @@ Na Azure, use a URL pública no lugar de `http://localhost:3000`.
 
 ## Outros prints úteis
 
-- `npm test` com os 30 testes passando (E3).
+- `npm test` com os 70 testes passando (E3).
 - `/health` respondendo `connected` (E1).
 - Dashboard com um serviço em "amostra insuficiente" (CA4), quando a integração do painel estiver pronta.
 - Comentário ocultado que some da lista pública sem mudar a média (CA5).

@@ -20,7 +20,9 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--fundo);
+  background:
+    radial-gradient(circle at 8% -8%, color-mix(in srgb, var(--primaria) 10%, transparent), transparent 26rem),
+    var(--fundo);
   color: var(--texto);
   font-family: var(--fonte);
   font-size: var(--t-base);
@@ -121,8 +123,9 @@ canvas {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: var(--superficie);
+  background: color-mix(in srgb, var(--superficie) 92%, transparent);
   border-bottom: 1px solid var(--borda);
+  backdrop-filter: blur(18px);
 }
 
 .topbar-inner {
@@ -130,6 +133,7 @@ canvas {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--e2) var(--e4);
+  min-height: 4.75rem;
   padding-block: var(--e2);
 }
 
@@ -152,9 +156,10 @@ canvas {
   place-items: center;
   width: 2.25rem;
   height: 2.25rem;
-  border-radius: var(--r-sm);
+  border-radius: 0.85rem 0.85rem 0.85rem 0.2rem;
   background: var(--primaria);
   color: var(--primaria-texto);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--primaria) 30%, transparent);
 }
 
 .brand-marca svg {
@@ -195,8 +200,8 @@ canvas {
 }
 
 .nav a[aria-current="page"] {
-  background: var(--info-fundo);
-  color: var(--info);
+  background: var(--primaria);
+  color: var(--primaria-texto);
 }
 
 .status-conexao {
@@ -234,22 +239,25 @@ canvas {
   min-height: var(--alvo);
   padding: var(--e2) var(--e5);
   border: 2px solid transparent;
-  border-radius: var(--r-md);
+  border-radius: var(--r-pill);
   font: inherit;
   font-weight: 700;
   text-decoration: none;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 
 .btn-primaria {
   background: var(--primaria);
   color: var(--primaria-texto);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--primaria) 24%, transparent);
 }
 
 .btn-primaria:hover {
   background: var(--primaria-hover);
   color: var(--primaria-texto);
+  box-shadow: 0 12px 24px color-mix(in srgb, var(--primaria) 32%, transparent);
+  transform: translateY(-1px);
 }
 
 .btn-secundaria {
@@ -369,12 +377,16 @@ textarea:focus-visible {
   align-items: flex-end;
   justify-content: space-between;
   gap: var(--e4);
-  padding-block: var(--e6) var(--e5);
+  padding-block: var(--e7) var(--e6);
 }
 
 .etiqueta {
   display: inline-block;
   margin-bottom: var(--e2);
+  padding: 0.3rem 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--primaria) 25%, var(--borda));
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--primaria) 9%, var(--superficie));
   color: var(--primaria);
   font-size: var(--t-sm);
   font-weight: 800;
@@ -385,7 +397,7 @@ textarea:focus-visible {
 .metricas {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
-  gap: var(--e4);
+  gap: var(--e3);
   margin-bottom: var(--e5);
 }
 
@@ -394,8 +406,19 @@ textarea:focus-visible {
   gap: var(--e1);
   padding: var(--e4) var(--e5);
   border: 1px solid var(--borda);
-  border-radius: var(--r-lg);
+  border-radius: var(--r-md);
   background: var(--superficie);
+  box-shadow: var(--sombra);
+  overflow: hidden;
+  position: relative;
+}
+
+.metrica::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0.28rem;
+  background: var(--primaria);
 }
 
 .metrica span {
@@ -404,7 +427,7 @@ textarea:focus-visible {
 }
 
 .metrica strong {
-  font-size: var(--t-2xl);
+  font-size: clamp(1.8rem, 1.2rem + 2.3vw, 2.8rem);
   line-height: 1.1;
 }
 
@@ -544,7 +567,7 @@ textarea:focus-visible {
   margin-top: var(--e7);
   padding-block: var(--e5);
   border-top: 1px solid var(--borda);
-  background: var(--superficie);
+  background: var(--superficie-2);
   color: var(--texto-2);
   font-size: var(--t-sm);
 }

@@ -1,8 +1,8 @@
 # Implantação na Azure (Nível A)
 
-**Situação: PENDENTE.** Os recursos ainda não foram criados. Este documento é o roteiro para criá-los
-e comprovar a implantação. Quando cada passo for executado, registre o resultado e o print em
-`evidencias/`.
+**Situação: implantado (Nível A).** A aplicação está publicada no Azure App Service e usa
+PostgreSQL 16 gerenciado. Este documento registra a configuração adotada e serve como roteiro
+de reprodução. Os prints obrigatórios continuam pendentes em `evidencias/`.
 
 ## Antes de começar
 
