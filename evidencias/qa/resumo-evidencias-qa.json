@@ -1,0 +1,49 @@
+{
+  "gerado_em": "18/11/2026, 15:46:07",
+  "E1": {
+    "status": "ok",
+    "database": "connected",
+    "iniciado_em": "2026-11-18T18:43:49.250Z"
+  },
+  "D13_indicadores": [
+    {
+      "servico": "Secretaria",
+      "quantidade": 7,
+      "media": 4.3,
+      "amostra_suficiente": true
+    },
+    {
+      "servico": "Biblioteca",
+      "quantidade": 7,
+      "media": 4,
+      "amostra_suficiente": true
+    },
+    {
+      "servico": "Cantina",
+      "quantidade": 6,
+      "media": 3.5,
+      "amostra_suficiente": true
+    },
+    {
+      "servico": "Laboratórios",
+      "quantidade": 2,
+      "media": null,
+      "amostra_suficiente": false
+    }
+  ],
+  "E3": {
+    "codigoDeSaida": 0,
+    "linhas": 401
+  },
+  "E5": {
+    "variaveis": [
+      "ADMIN_SENHA_HASH",
+      "ADMIN_USUARIO",
+      "DATABASE_URL",
+      "SCM_DO_BUILD_DURING_DEPLOYMENT",
+      "SESSAO_SEGREDO"
+    ],
+    "envRastreadoPeloGit": "não",
+    "regraDeIgnore": ".gitignore:2:.env\t.env"
+  }
+}

@@ -1,0 +1,403 @@
+Executado em 18/11/2026, 15:47:44 (horário de Recife)
+$ npm test
+
+
+> avalie-o-atendimento@1.0.0 test
+> node --test --test-concurrency=1
+
+{"nivel":"info","metodo":"GET","rota":"/api/servicos","status":200,"ms":7}
+▶ API Avalie o Atendimento
+  ✔ RF01: os quatro serviços vêm do script SQL inicial (1670.3902ms)
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":400,"ms":16}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":400,"ms":1}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":400,"ms":1}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":400,"ms":0}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":400,"ms":0}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":400,"ms":0}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":400,"ms":0}
+  ✔ CA1: nota 0, 6, 3.5, texto ou ausente retornam 400 e nada é gravado (1331.5401ms)
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":6}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":2}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":1}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":1}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":1}
+  ✔ CA1: notas de 1 a 5 são aceitas com HTTP 201 (1202.8038ms)
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":400,"ms":1}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":3}
+  ✔ CA2: comentário de 281 caracteres retorna 400; de 280 é aceito (1083.427ms)
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":3}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":1}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":400,"ms":0}
+  ✔ CA2: conta caracteres, não bytes (acentos e emoji valem 1) (1129.9228ms)
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":3}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":1}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":1}
+{"nivel":"info","metodo":"GET","rota":"/api/indicadores","status":200,"ms":5}
+  ✔ CA3: notas 5, 4 e 4 resultam em média 4,3 e quantidade 3 (1079.8121ms)
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":4}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":1}
+{"nivel":"info","metodo":"GET","rota":"/api/indicadores","status":200,"ms":4}
+  ✔ CA4: com duas avaliações a média é nula (amostra insuficiente) (1102.6144ms)
+{"nivel":"info","metodo":"GET","rota":"/api/indicadores","status":200,"ms":2}
+  ✔ CA4: serviço sem avaliação aparece com quantidade 0 e média nula (1120.7599ms)
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":3}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":1}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":1}
+{"nivel":"info","metodo":"GET","rota":"/api/indicadores","status":200,"ms":4}
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":200,"ms":45}
+{"nivel":"info","metodo":"PATCH","rota":"/api/admin/avaliacoes/:id","status":200,"ms":3}
+{"nivel":"info","metodo":"GET","rota":"/api/comentarios","status":200,"ms":2}
+{"nivel":"info","metodo":"GET","rota":"/api/indicadores","status":200,"ms":1}
+{"nivel":"info","metodo":"PATCH","rota":"/api/admin/avaliacoes/:id","status":200,"ms":1}
+{"nivel":"info","metodo":"GET","rota":"/api/comentarios","status":200,"ms":1}
+  ✔ CA5: comentário oculto some da lista pública, mas a nota continua na média (1132.8413ms)
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":404,"ms":4}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":404,"ms":0}
+  ✔ serviço inexistente retorna 404 (1056.964ms)
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":200,"ms":51}
+{"nivel":"info","metodo":"PATCH","rota":"/api/admin/avaliacoes/:id","status":404,"ms":3}
+  ✔ avaliação inexistente na moderação retorna 404 (1171.7065ms)
+{"nivel":"info","metodo":"GET","rota":"/nao-existe","status":404,"ms":1}
+  ✔ rota desconhecida da API retorna 404 em JSON (1059.606ms)
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":400,"ms":1}
+  ✔ JSON malformado retorna 400 sem detalhe interno (1002.2301ms)
+Falha de banco: ECONNREFUSED
+{"nivel":"info","metodo":"GET","rota":"/api/servicos","status":503,"ms":4}
+Falha de banco: ECONNREFUSED
+{"nivel":"info","metodo":"GET","rota":"/api/indicadores","status":503,"ms":1}
+Falha de banco: ECONNREFUSED
+{"nivel":"info","metodo":"GET","rota":"/api/comentarios","status":503,"ms":1}
+Health: banco indisponível: ECONNREFUSED
+Falha de banco: ECONNREFUSED
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":503,"ms":1}
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":200,"ms":44}
+Falha de banco: ECONNREFUSED
+{"nivel":"info","metodo":"PATCH","rota":"/api/admin/avaliacoes/:id","status":503,"ms":1}
+  ✔ banco fora do ar: rotas de dados e /health retornam 503 sem expor detalhes (1096.9041ms)
+  ✔ /health confirma a conexão com o banco (1026.9027ms)
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":4}
+{"nivel":"info","metodo":"GET","rota":"/api/comentarios","status":200,"ms":4}
+  ✔ persistência: depois de reiniciar a aplicação o registro continua lá (1086.216ms)
+  ✔ restrições no banco recusam nota inválida mesmo sem passar pela API (1081.8618ms)
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":2}
+  ✔ injeção de SQL no comentário é gravada como texto (consulta parametrizada) (1028.9256ms)
+{"nivel":"info","metodo":"GET","rota":"/api/admin/me","status":401,"ms":1}
+{"nivel":"info","metodo":"GET","rota":"/api/admin/avaliacoes","status":401,"ms":0}
+{"nivel":"info","metodo":"PATCH","rota":"/api/admin/avaliacoes/:id","status":401,"ms":1}
+{"nivel":"info","metodo":"GET","rota":"/api/admin/me","status":401,"ms":0}
+  ✔ moderação sem login retorna 401; com cookie falso também (1171.5131ms)
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":401,"ms":47}
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":401,"ms":45}
+  ✔ login: senha errada e usuário errado retornam 401 com a mesma mensagem (1359.9815ms)
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":200,"ms":44}
+{"nivel":"info","metodo":"GET","rota":"/api/admin/me","status":200,"ms":1}
+  ✔ login correto cria cookie HttpOnly/SameSite e libera a moderação (1102.0951ms)
+{"nivel":"info","metodo":"POST","rota":"/api/admin/logout","status":200,"ms":1}
+  ✔ logout encerra a sessão no navegador (1024.9703ms)
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":200,"ms":42}
+{"nivel":"info","metodo":"PATCH","rota":"/api/admin/avaliacoes/:id","status":403,"ms":1}
+  ✔ moderação com Origin de outro site é bloqueada (403) (1044.9358ms)
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":2}
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":200,"ms":41}
+{"nivel":"info","metodo":"PATCH","rota":"/api/admin/avaliacoes/:id","status":400,"ms":1}
+{"nivel":"info","metodo":"PATCH","rota":"/api/admin/avaliacoes/:id","status":400,"ms":0}
+  ✔ moderação valida o corpo: oculta precisa ser booleano (1057.8865ms)
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":2}
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":200,"ms":41}
+{"nivel":"info","metodo":"PATCH","rota":"/api/admin/avaliacoes/:id","status":200,"ms":1}
+{"nivel":"info","metodo":"GET","rota":"/api/admin/avaliacoes","status":200,"ms":3}
+{"nivel":"info","metodo":"GET","rota":"/api/comentarios","status":200,"ms":1}
+  ✔ lista do gestor traz comentários ocultos; a pública não (1038.6476ms)
+{"nivel":"info","metodo":"GET","rota":"/api/servicos","status":200,"ms":1}
+  ✔ respostas da API não são guardadas em cache e trazem nosniff (1071.9322ms)
+{"nivel":"info","metodo":"GET","rota":"/server.js","status":404,"ms":1}
+{"nivel":"info","metodo":"GET","rota":"/package.json","status":404,"ms":0}
+{"nivel":"info","metodo":"GET","rota":"/banco/schema.sql","status":404,"ms":0}
+{"nivel":"info","metodo":"GET","rota":"/.env","status":404,"ms":0}
+{"nivel":"info","metodo":"GET","rota":"/src/app.js","status":404,"ms":0}
+{"nivel":"info","metodo":"GET","rota":"/.git/config","status":404,"ms":0}
+{"nivel":"info","metodo":"GET","rota":"/","status":200,"ms":3}
+{"nivel":"info","metodo":"GET","rota":"/dashboard.html","status":200,"ms":1}
+  ✔ a API não serve arquivos do servidor (código, banco, .env) (1025.8981ms)
+✔ API Avalie o Atendimento (30366.0657ms)
+Falha de banco: SEM_BANCO
+{"nivel":"info","metodo":"GET","rota":"/api/servicos","status":503,"ms":1}
+Health: banco indisponível: SEM_BANCO
+{"nivel":"info","metodo":"GET","rota":"/","status":200,"ms":1}
+▶ sem configuração
+  ✔ sem DATABASE_URL as rotas de dados respondem 503 e o front continua no ar (8.1493ms)
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":503,"ms":1}
+  ✔ sem variáveis do gestor o login responde 503 (nunca libera) (1026.7569ms)
+✔ sem configuração (1035.1538ms)
+{"nivel":"info","metodo":"GET","rota":"/api/indicadores","status":200,"ms":3}
+{"nivel":"info","metodo":"GET","rota":"/api/comentarios","status":200,"ms":2}
+▶ banco novo
+  ✔ traz só os 4 serviços e nenhuma avaliação: nada é inventado (1027.216ms)
+✔ banco novo (1027.4253ms)
+{"nivel":"info","metodo":"GET","rota":"/","status":200,"ms":6}
+▶ cabeçalhos de segurança
+  ✔ a CSP só aceita o próprio servidor: sem inline, sem eval, sem frame, sem CDN (1506.7376ms)
+{"nivel":"info","metodo":"GET","rota":"/","status":200,"ms":2}
+{"nivel":"info","metodo":"GET","rota":"/dashboard.html","status":200,"ms":2}
+{"nivel":"info","metodo":"GET","rota":"/api/servicos","status":200,"ms":4}
+{"nivel":"info","metodo":"GET","rota":"/nao-existe","status":404,"ms":0}
+{"nivel":"info","metodo":"GET","rota":"/nao-existe","status":404,"ms":0}
+  ✔ páginas, API e 404 trazem HSTS, anti-clickjacking, COOP/CORP/COEP e Permissions-Policy (1092.5951ms)
+{"nivel":"info","metodo":"GET","rota":"/","status":200,"ms":1}
+{"nivel":"info","metodo":"GET","rota":"/index.html","status":200,"ms":1}
+{"nivel":"info","metodo":"GET","rota":"/manifest.webmanifest","status":200,"ms":2}
+{"nivel":"info","metodo":"GET","rota":"/sw.js","status":200,"ms":2}
+{"nivel":"info","metodo":"GET","rota":"/api/servicos","status":200,"ms":2}
+{"nivel":"info","metodo":"GET","rota":"/api/indicadores","status":200,"ms":2}
+  ✔ cache: páginas são revalidadas, a API nunca é guardada (1056.219ms)
+{"nivel":"info","metodo":"GET","rota":"/chart.umd.js","status":200,"ms":5}
+{"nivel":"info","metodo":"GET","rota":"/vendor/outro.js","status":404,"ms":1}
+{"nivel":"info","metodo":"GET","rota":"/vendor/","status":404,"ms":1}
+{"nivel":"info","metodo":"GET","rota":"/package.json","status":404,"ms":0}
+{"nivel":"info","metodo":"GET","rota":"/package.json","status":404,"ms":0}
+{"nivel":"info","metodo":"GET","rota":"/node_modules/chart.js/package.json","status":404,"ms":0}
+{"nivel":"info","metodo":"GET","rota":"/vendor/chart.umd.js.map","status":404,"ms":0}
+  ✔ Chart.js sai do próprio servidor; nenhum outro arquivo de /vendor ou node_modules (1040.186ms)
+✔ cabeçalhos de segurança (4697.1026ms)
+{"nivel":"info","metodo":"GET","rota":"/api/servicos","status":200,"ms":1}
+{"nivel":"info","metodo":"GET","rota":"/api/servicos","status":200,"ms":1}
+{"nivel":"info","metodo":"GET","rota":"/api/servicos","status":200,"ms":1}
+{"nivel":"info","metodo":"GET","rota":"/api/servicos","status":200,"ms":1}
+{"nivel":"info","metodo":"GET","rota":"/api/servicos","status":200,"ms":1}
+{"nivel":"info","metodo":"GET","rota":"/api/servicos","status":429,"ms":0}
+▶ limite geral de requisições
+  ✔ acima do limite por minuto responde 429; a sonda /health nunca é limitada (1048.8324ms)
+✔ limite geral de requisições (1049.1822ms)
+▶ front-end compatível com a CSP
+  ✔ nenhuma página tem script inline, manipulador on*, estilo inline ou <style> (3.545ms)
+  ✔ nenhuma página carrega recurso de outro endereço (CDN, fonte externa) (2.5455ms)
+  ✔ todo formulário tem method post e action: sem JavaScript nada vai para a URL (2.7555ms)
+  ✔ o JavaScript do front não usa eval, new Function nem escreve HTML da API com innerHTML (5.2207ms)
+✔ front-end compatível com a CSP (14.3922ms)
+▶ lerConfig: padrões e leitura
+  ✔ sem nenhuma variável vale o padrão (comportamento anterior à configuração) (0.7305ms)
+  ✔ os padrões documentados em PADROES batem com a configuração padrão (0.611ms)
+  ✔ cada variável é lida e convertida para a unidade usada pelo código (0.256ms)
+  ✔ SESSAO_HORAS aceita ponto ou vírgula decimal (0.1472ms)
+  ✔ variável vazia ou só com espaços conta como ausente (0.1191ms)
+  ✔ a configuração devolvida é imutável (0.359ms)
+✔ lerConfig: padrões e leitura (3.2683ms)
+▶ lerConfig: valor inválido falha com mensagem clara
+  ✔ LIMITE_GERAL_POR_MINUTO: texto, zero, negativo e decimal são recusados (0.4865ms)
+  ✔ LIMITE_AVALIACOES_POR_MINUTO: texto, zero, negativo e decimal são recusados (0.195ms)
+  ✔ LIMITE_LOGIN_TENTATIVAS: texto, zero, negativo e decimal são recusados (0.1877ms)
+  ✔ LIMITE_LOGIN_JANELA_MINUTOS: texto, zero, negativo e decimal são recusados (0.1803ms)
+  ✔ TAMANHO_MAXIMO_CORPO_KB: texto, zero, negativo e decimal são recusados (0.1297ms)
+  ✔ COMENTARIOS_PUBLICOS_MAXIMO: texto, zero, negativo e decimal são recusados (0.1222ms)
+  ✔ AVALIACOES_GESTOR_MAXIMO: texto, zero, negativo e decimal são recusados (0.1192ms)
+  ✔ BANCO_CONEXOES_MAXIMAS: texto, zero, negativo e decimal são recusados (0.107ms)
+  ✔ BANCO_TIMEOUT_CONEXAO_MS: texto, zero, negativo e decimal são recusados (0.1307ms)
+  ✔ BANCO_TIMEOUT_OCIOSO_MS: texto, zero, negativo e decimal são recusados (0.1285ms)
+  ✔ SESSAO_HORAS: texto, zero, negativo e infinito são recusados (0.2026ms)
+  ✔ PORT: fora de 1 a 65535 ou não numérica é recusada (0.1789ms)
+  ✔ o valor inválido nunca cai em silêncio no padrão: criarApp e criarBanco também falham (1476.5306ms)
+✔ lerConfig: valor inválido falha com mensagem clara (1479.3047ms)
+{"nivel":"info","metodo":"GET","rota":"/api/servicos","status":200,"ms":5}
+{"nivel":"info","metodo":"GET","rota":"/api/servicos","status":200,"ms":1}
+{"nivel":"info","metodo":"GET","rota":"/api/servicos","status":200,"ms":1}
+{"nivel":"info","metodo":"GET","rota":"/api/servicos","status":429,"ms":1}
+▶ a configuração tem efeito real na aplicação
+  ✔ LIMITE_GERAL_POR_MINUTO=3: a 4ª requisição responde 429 e o /health nunca é limitado (1159.6947ms)
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":20}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":1}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":429,"ms":0}
+  ✔ LIMITE_AVALIACOES_POR_MINUTO=2: a 3ª avaliação responde 429 e não é gravada (1128.9501ms)
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":401,"ms":42}
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":401,"ms":42}
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":429,"ms":0}
+  ✔ LIMITE_LOGIN_TENTATIVAS=2: a 3ª tentativa de login responde 429 (1179.7693ms)
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":413,"ms":1}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":3}
+  ✔ TAMANHO_MAXIMO_CORPO_KB=1: corpo de 2 KB responde 413 (1039.703ms)
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":3}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":1}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":1}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":1}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":1}
+{"nivel":"info","metodo":"GET","rota":"/api/comentarios","status":200,"ms":5}
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":200,"ms":42}
+{"nivel":"info","metodo":"GET","rota":"/api/admin/avaliacoes","status":200,"ms":2}
+  ✔ COMENTARIOS_PUBLICOS_MAXIMO=2 e AVALIACOES_GESTOR_MAXIMO=3 limitam as listas (1084.2216ms)
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":200,"ms":44}
+{"nivel":"info","metodo":"GET","rota":"/api/admin/me","status":200,"ms":0}
+{"nivel":"info","metodo":"GET","rota":"/api/admin/me","status":401,"ms":1}
+  ✔ SESSAO_HORAS=0,0004 (1,44 s): a sessão vale logo depois do login e expira sozinha (2879.0128ms)
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":200,"ms":41}
+  ✔ SESSAO_HORAS define o Max-Age do cookie de sessão (1083.8797ms)
+{"nivel":"info","metodo":"GET","rota":"/api/servicos","status":200,"ms":1}
+{"nivel":"info","metodo":"GET","rota":"/api/servicos","status":200,"ms":1}
+{"nivel":"info","metodo":"GET","rota":"/api/servicos","status":200,"ms":1}
+{"nivel":"info","metodo":"GET","rota":"/api/servicos","status":200,"ms":1}
+{"nivel":"info","metodo":"GET","rota":"/api/servicos","status":200,"ms":1}
+  ✔ as opções passadas a criarApp (usadas nos testes) têm prioridade sobre o ambiente (1041.0565ms)
+  ✔ BANCO_*: o pool de conexões é criado com os valores configurados (1026.3601ms)
+✔ a configuração tem efeito real na aplicação (11623.456ms)
+▶ dados de demonstração
+  ✔ o banco só com o schema continua sem nenhuma avaliação (1486.0194ms)
+{"nivel":"info","metodo":"GET","rota":"/api/indicadores","status":200,"ms":8}
+  ✔ a carga grava 20 avaliações no banco e a API as devolve pelos indicadores (1127.9667ms)
+  ✔ a carga é idempotente: rodar de novo não duplica (1051.5671ms)
+{"nivel":"info","metodo":"GET","rota":"/api/comentarios","status":200,"ms":5}
+  ✔ as datas se espalham pelos últimos dias e os comentários aparecem na lista pública (1041.7945ms)
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":16}
+  ✔ a carga convive com avaliações reais já existentes e as preserva (1011.16ms)
+✔ dados de demonstração (5719.887ms)
+▶ log de requisições
+  ✔ cada requisição gera uma linha JSON com método, rota, status e tempo (1498.6061ms)
+  ✔ erros também são registrados com o status (1076.4087ms)
+  ✔ a sonda /health não entra no log (1040.682ms)
+  ✔ comentário, cookie, query string e IP nunca aparecem no log (1063.7611ms)
+  ✔ rotas com parâmetro aparecem pelo padrão, não pelo valor (1049.9188ms)
+  ✔ caminho com quebra de linha não forja linhas no log (992.3517ms)
+✔ log de requisições (6723.0881ms)
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":200,"ms":61}
+{"nivel":"info","metodo":"GET","rota":"/api/admin/me","status":401,"ms":1}
+▶ segurança
+  ▶ sessão
+    ✔ cookie com a assinatura trocada é recusado (1602.5552ms)
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":200,"ms":41}
+{"nivel":"info","metodo":"GET","rota":"/api/admin/me","status":401,"ms":0}
+    ✔ cookie com a carga alterada (outro usuário, validade maior) é recusado (1171.9805ms)
+{"nivel":"info","metodo":"GET","rota":"/api/admin/me","status":401,"ms":1}
+    ✔ cookie assinado com outro segredo é recusado (1037.3684ms)
+{"nivel":"info","metodo":"GET","rota":"/api/admin/me","status":401,"ms":1}
+    ✔ sessão vencida (emitida há 9 horas) é recusada (1062.9637ms)
+{"nivel":"info","metodo":"GET","rota":"/api/admin/me","status":401,"ms":1}
+{"nivel":"info","metodo":"GET","rota":"/api/admin/me","status":401,"ms":0}
+{"nivel":"info","metodo":"GET","rota":"/api/admin/me","status":401,"ms":0}
+{"nivel":"info","metodo":"GET","rota":"/api/admin/me","status":401,"ms":0}
+{"nivel":"info","metodo":"GET","rota":"/api/admin/me","status":401,"ms":0}
+{"nivel":"info","metodo":"GET","rota":"/api/admin/me","status":401,"ms":0}
+    ✔ cookie vazio, sem ponto ou com lixo é recusado sem derrubar o servidor (1136.2914ms)
+  ✔ sessão (6012.2977ms)
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":401,"ms":43}
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":401,"ms":41}
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":401,"ms":41}
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":429,"ms":0}
+  ▶ login
+    ✔ força bruta: depois do limite de tentativas o IP recebe 429, mesmo com a senha certa (1142.1412ms)
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":401,"ms":42}
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":401,"ms":41}
+    ✔ a resposta não revela se o usuário existe (1090.4039ms)
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":401,"ms":41}
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":401,"ms":41}
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":401,"ms":40}
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":401,"ms":42}
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":400,"ms":1}
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":400,"ms":1}
+    ✔ corpo com tipos errados (objeto, array, número) não autentica nem quebra (1188.6352ms)
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":403,"ms":1}
+{"nivel":"info","metodo":"POST","rota":"/api/admin/logout","status":403,"ms":0}
+    ✔ login e logout de outra origem (CSRF) são bloqueados (1030.5006ms)
+  ✔ login (4452.3499ms)
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":5}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":1}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":1}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":429,"ms":0}
+  ▶ abuso
+    ✔ limite de avaliações por minuto responde 429 e não grava a excedente (1029.6438ms)
+    ✔ o banco não tem coluna que identifique o estudante (IP, agente, sessão) (1004.092ms)
+  ✔ abuso (2034.097ms)
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":413,"ms":2}
+  ▶ entradas
+    ✔ corpo acima de 10 KB retorna 413 (988.4358ms)
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":3}
+    ✔ campos extras (id, oculta, criada_em) são ignorados: não dá para criar já oculto nem escolher o id (997.8689ms)
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":400,"ms":1}
+    ✔ poluição de protótipo no corpo não altera o comportamento (1071.3828ms)
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":400,"ms":1}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":400,"ms":0}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":400,"ms":0}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":400,"ms":0}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":400,"ms":0}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":400,"ms":0}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":400,"ms":1}
+    ✔ servico_id e nota como texto, lista ou objeto retornam 400 (1048.7439ms)
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":200,"ms":44}
+{"nivel":"info","metodo":"PATCH","rota":"/api/admin/avaliacoes/:id","status":404,"ms":1}
+{"nivel":"info","metodo":"PATCH","rota":"/api/admin/avaliacoes/:id","status":400,"ms":0}
+{"nivel":"info","metodo":"PATCH","rota":"/api/admin/avaliacoes/:id","status":404,"ms":0}
+{"nivel":"info","metodo":"PATCH","rota":"/api/admin/avaliacoes/:id","status":400,"ms":0}
+{"nivel":"info","metodo":"PATCH","rota":"/api/admin/avaliacoes/:id","status":400,"ms":0}
+{"nivel":"info","metodo":"PATCH","rota":"/api/admin/avaliacoes/:id","status":400,"ms":0}
+{"nivel":"info","metodo":"PATCH","rota":"/api/admin/avaliacoes/:id","status":400,"ms":0}
+    ✔ identificadores absurdos na moderação não causam erro de banco (1055.8092ms)
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":200,"ms":41}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":400,"ms":0}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":404,"ms":0}
+{"nivel":"info","metodo":"GET","rota":"/inexistente","status":404,"ms":1}
+{"nivel":"info","metodo":"PATCH","rota":"/api/admin/avaliacoes/:id","status":400,"ms":0}
+{"nivel":"info","metodo":"PATCH","rota":"/api/admin/avaliacoes/:id","status":404,"ms":2}
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":401,"ms":40}
+    ✔ nenhuma resposta de erro expõe pilha, SQL, driver ou caminho (1091.8353ms)
+  ✔ entradas (6254.6941ms)
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":200,"ms":41}
+{"nivel":"info","metodo":"DELETE","rota":"/avaliacoes","status":404,"ms":0}
+{"nivel":"info","metodo":"DELETE","rota":"/avaliacoes/1","status":404,"ms":0}
+{"nivel":"info","metodo":"DELETE","rota":"/servicos","status":404,"ms":0}
+{"nivel":"info","metodo":"PUT","rota":"/avaliacoes","status":404,"ms":0}
+{"nivel":"info","metodo":"PUT","rota":"/avaliacoes/1","status":404,"ms":0}
+{"nivel":"info","metodo":"PUT","rota":"/servicos","status":404,"ms":0}
+{"nivel":"info","metodo":"PATCH","rota":"/avaliacoes","status":404,"ms":0}
+{"nivel":"info","metodo":"PATCH","rota":"/avaliacoes/1","status":404,"ms":0}
+{"nivel":"info","metodo":"PATCH","rota":"/servicos","status":404,"ms":0}
+{"nivel":"info","metodo":"DELETE","rota":"/admin/avaliacoes/1","status":404,"ms":0}
+  ▶ superfície exposta
+    ✔ não existem rotas destrutivas: DELETE, PUT e PATCH nas avaliações retornam 404 (1034.1031ms)
+{"nivel":"info","metodo":"GET","rota":"/server.js","status":404,"ms":1}
+{"nivel":"info","metodo":"GET","rota":"/css/..%2fserver.js","status":404,"ms":1}
+{"nivel":"info","metodo":"GET","rota":"/package.json","status":404,"ms":0}
+{"nivel":"info","metodo":"GET","rota":"/css/%2e%2e%2f%2e%2e%2f.env","status":404,"ms":0}
+{"nivel":"info","metodo":"GET","rota":"/..%2f..%2fetc/passwd","status":404,"ms":0}
+{"nivel":"info","metodo":"GET","rota":"/.git/HEAD","status":404,"ms":0}
+{"nivel":"info","metodo":"GET","rota":"/node_modules/express/package.json","status":404,"ms":0}
+{"nivel":"info","metodo":"GET","rota":"/banco/schema.sql","status":404,"ms":0}
+{"nivel":"info","metodo":"GET","rota":"/src/auth.js","status":404,"ms":0}
+    ✔ travessia de diretório e arquivos ocultos não são servidos (998.9454ms)
+{"nivel":"info","metodo":"GET","rota":"/","status":200,"ms":3}
+{"nivel":"info","metodo":"GET","rota":"/api/servicos","status":200,"ms":2}
+{"nivel":"info","metodo":"GET","rota":"/api/servicos","status":200,"ms":1}
+{"nivel":"info","metodo":"GET","rota":"/","status":200,"ms":1}
+    ✔ páginas e API trazem nosniff e Referrer-Policy; a API não é guardada em cache (1040.8876ms)
+  ✔ superfície exposta (3074.446ms)
+✔ segurança (21828.7296ms)
+▶ front-end sem serviços escritos à mão
+  ✔ nenhum nome de serviço do banco aparece no HTML, no JavaScript nem no service worker (10.4617ms)
+  ✔ nenhum <option> com id de serviço escrito no HTML (2.3298ms)
+  ✔ os selects de serviço só têm a opção neutra no HTML (1.4713ms)
+  ✔ js/servicos.js carrega depois de api.js e dom.js e antes do script da tela (2.0595ms)
+  ✔ o service worker guarda js/servicos.js no shell (0.6349ms)
+  ✔ o helper monta as opções com el() e nunca com innerHTML (0.6206ms)
+✔ front-end sem serviços escritos à mão (18.6637ms)
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":20}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":1}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":1}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":1}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":2}
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":201,"ms":2}
+{"nivel":"info","metodo":"POST","rota":"/api/admin/login","status":200,"ms":46}
+{"nivel":"info","metodo":"GET","rota":"/api/comentarios","status":200,"ms":5}
+{"nivel":"info","metodo":"GET","rota":"/api/admin/avaliacoes","status":200,"ms":1}
+▶ XSS armazenado
+  ✔ a API devolve cada carga idêntica, como JSON, em todas as rotas que a exibem (1553.5683ms)
+{"nivel":"info","metodo":"POST","rota":"/api/avaliacoes","status":400,"ms":1}
+  ✔ o nome do serviço e os números exibidos vêm do banco, não do que o estudante envia (1114.9209ms)
+✔ XSS armazenado (2669.5545ms)
+▶ front-end sem ponto de injeção de HTML
+  ✔ nenhum script do front usa innerHTML, outerHTML, insertAdjacentHTML, document.write nem escapeHTML (5.6014ms)
+  ✔ o helper de DOM recusa atributos que executam código ou carregam recurso (0.8191ms)
+  ✔ dom.js é carregado antes dos scripts que o usam, em todas as páginas (1.9007ms)
+✔ front-end sem ponto de injeção de HTML (8.701ms)
+ℹ tests 109
+ℹ suites 20
+ℹ pass 109
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 90734.0294
