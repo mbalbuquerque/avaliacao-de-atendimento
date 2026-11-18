@@ -70,3 +70,21 @@ pelo próprio servidor, formulários com `method="post"` e front sem `innerHTML`
 também apontava a falta de limite de requisições em três rotas, resolvida com um limite geral por IP. A
 confirmação final é a próxima execução do ZAP contra a versão publicada na Azure, que ainda não foi feita depois
 do deploy: até lá, estes itens constam como corrigidos no código e **não** como confirmados em produção.
+
+## Segunda execução do ZAP, contra a versão publicada com as correções (18/11/2026)
+
+Resultado: **0 alertas altos, 7 avisos, 61 verificações sem apontamento** (a primeira execução teve 14 avisos e
+54 sem apontamento). Deixaram de aparecer: Content-Security-Policy, HSTS, anti-clickjacking,
+Permissions-Policy, Cross-Origin-Embedder-Policy, script de outro domínio (Chart.js do CDN), Subresource
+Integrity e os formulários sem `method`. Confirmado em produção.
+
+| Aviso restante | Onde | Situação |
+|---|---|---|
+| Comentário suspeito [10027] | `js/dom.js` | Era a palavra portuguesa "todo" em um comentário; o ZAP lê como `TODO`. Comentário reescrito |
+| Cookie com `SameSite=None` [10054] | `ARRAffinity` do App Service | Cookie do balanceador do Azure, não do código. Afinidade de sessão desligada no App Service (`--client-affinity-enabled false`), pois há uma única instância |
+| Cache-Control a rever [10015] | páginas e `manifest.webmanifest` | Aceito: as páginas usam `no-cache` (revalidam a cada uso) para o deploy novo chegar na hora; a API usa `no-store` |
+| Conteúdo armazenável [10049] | CSS, `/` e as 404 de `/robots.txt` e `/sitemap.xml` | Aceito: são arquivos públicos e estáticos, sem dado de usuário |
+| Ausência de token anti-CSRF [10202] | formulário de avaliação e de login | Aceito: o formulário de avaliação é anônimo e não tem sessão a sequestrar; login e moderação são protegidos por `SameSite=Strict`, verificação do cabeçalho `Origin` (403) e cookie `HttpOnly`, com testes em `tests/seguranca.test.js` |
+| Autenticação identificada [10111] e gestão de sessão [10112] | `/api/admin/login` e `/` | Informativo: o ZAP apenas reconhece o login e o cookie de sessão |
+
+Os itens que seguem como "aceito" continuam no radar, mas não representam falha de segurança comprovada.
