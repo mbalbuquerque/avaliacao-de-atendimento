@@ -17,9 +17,11 @@ concurrency:
   group: deploy-azure
   cancel-in-progress: false
 
+# Nome e endereço do app vêm de variáveis do repositório (Settings > Secrets and variables >
+# Actions > Variables): AZURE_WEBAPP_NAME e APP_URL. Sem elas valem os padrões abaixo.
 env:
-  APP_NOME: app-cloud-g01-en
-  APP_URL: https://app-cloud-g01-en.azurewebsites.net
+  APP_NOME: ${{ vars.AZURE_WEBAPP_NAME || 'app-cloud-g01-en' }}
+  APP_URL: ${{ vars.APP_URL || format('https://{0}.azurewebsites.net', vars.AZURE_WEBAPP_NAME || 'app-cloud-g01-en') }}
 
 jobs:
   testar:
