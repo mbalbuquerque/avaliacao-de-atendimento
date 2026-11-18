@@ -22,7 +22,7 @@ uma média enganosa. O gestor pode ocultar comentários impróprios sem alterar 
 | Item | Situação |
 |---|---|
 | API, regras de negócio e validação no servidor | **Implementadas e testadas** |
-| Testes automatizados | **56 testes passando** (30 de API e regras, 20 de segurança, 6 de log), com **98,03% de linhas e 92,31% de ramos** cobertos em `src/` (medido em 18/11/2026; o CI exige no mínimo 90% e 80%) |
+| Testes automatizados | **70 testes passando** (30 de API e regras, 20 de segurança, 6 de log, 9 de cabeçalhos e CSP, 5 de XSS), com **98,24% de linhas e 93,13% de ramos** cobertos em `src/` (medido em 18/11/2026; o CI exige no mínimo 90% e 80%) |
 | Banco PostgreSQL: tabelas, restrições, serviços iniciais e 20 avaliações fictícias | **Implementado** (`banco/schema.sql`, `banco/dados-iniciais.sql`, `banco/permissoes.sql`) |
 | `GET /health` com teste real do banco | **Implementado e testado** |
 | Moderação do gestor com autenticação no servidor | **Implementada e testada** (cookie `HttpOnly`, `SameSite=Strict`, `Secure`) |
@@ -30,8 +30,8 @@ uma média enganosa. O gestor pode ocultar comentários impróprios sem alterar 
 | Implantação na Azure (Nível A) | **Implantado** em https://app-cloud-g01-en.azurewebsites.net (App Service Linux F1, Node 22 LTS, e PostgreSQL 16 Flexible Server B1ms, Brazil South); `/health` responde 200 com `database: connected`; HTTPS obrigatório; usuário do banco da aplicação com privilégios mínimos |
 | CI (lint, testes com cobertura, PostgreSQL 16 real, auditoria, CodeQL, Gitleaks, ZAP semanal) | **Em funcionamento** (seção 8) |
 | CD (deploy automático) | **Workflow pronto, mas desligado**: falta cadastrar o segredo `AZURE_WEBAPP_PUBLISH_PROFILE`, que só um administrador do repositório consegue (#18). O deploy atual foi feito manualmente |
-| Cabeçalhos de segurança (CSP, HSTS) e Chart.js local | **Não aplicados ainda** (#14, em andamento) |
-| Redesenho de todas as telas | **Em andamento** (#22); os formulários ainda sem `method="post"` entram aí |
+| Cabeçalhos de segurança (CSP restritiva, HSTS, anti-clickjacking, COOP/CORP/COEP, Permissions-Policy), limite geral de requisições e Chart.js local | **Aplicados** (#14), com testes que leem o HTML e o JavaScript do front para provar que ele funciona sob a CSP |
+| Redesenho de todas as telas (tokens, tema claro e escuro, acessibilidade, formulários com `method="post"`) e DOM sem `innerHTML` | **Concluídos** (#22, #36) |
 | Testes ponta a ponta do painel em navegador | **Pendentes** (#17) |
 | Prova de persistência com a palavra do dia, teste do professor e pitch de 90 s | **Pendentes** (#21; roteiro e scripts em `evidencias/`) |
 
@@ -142,7 +142,7 @@ npm run banco -- --dados             # cria as tabelas e carrega as 20 avaliaç�
 npm run dev                          # sobe em http://localhost:3000 lendo o .env
 npm start                            # igual, sem ler o .env (o ambiente já tem as variáveis)
 npm run lint                         # ESLint em servidor, testes e navegador
-npm test                             # roda os 56 testes
+npm test                             # roda os 70 testes
 npm run test:cobertura               # testes com cobertura mínima (90% de linhas e 80% de ramos)
 npm run auditar                      # npm audit das dependências de produção
 ```
@@ -174,7 +174,7 @@ reinício, logs, parada do servidor e exclusão do grupo.
 
 Todos executados com `npm test`, contra um **PostgreSQL de verdade em memória (PGlite)** que usa o mesmo
 `banco/schema.sql` da produção. No CI, a mesma suíte roda também contra um **PostgreSQL 16 real**.
-Resultado medido em 18/11/2026: **56 de 56 passaram**, cobertura de **98,03% de linhas e 92,31% de ramos** em `src/`.
+Resultado medido em 18/11/2026: **70 de 70 passaram**, cobertura de **98,24% de linhas e 93,13% de ramos** em `src/`.
 Não há objetos falsos de banco: a falha de banco é testada com uma conexão real recusada.
 
 | Arquivo | Testes | O que cobre |
@@ -239,8 +239,9 @@ Resumo; o modelo de ameaças completo (ameaça, impacto, controle, teste e risco
   repositório nunca é servido.
 - Log de requisições sem IP, corpo, cookie, query string nem comentário.
 - Somente dados fictícios.
-- **Ainda não aplicado:** Content-Security-Policy, HSTS e demais cabeçalhos do ZAP (#14); `method="post"` nos
-  formulários (#22).
+- Content-Security-Policy sem `unsafe-inline` nem CDN, HSTS, anti-clickjacking, COOP/CORP/COEP e Permissions-Policy (#14).
+- Limite geral de requisições por IP, em memória (#14), além dos limites mais apertados de login e de avaliações.
+- Front sem `innerHTML`: o texto vindo da API entra sempre como nó de texto (#36); formulários com `method="post"`.
 
 ## 10. Fluxo de trabalho e histórico
 
@@ -259,8 +260,7 @@ no GitHub), o CI precisa passar e só então há o merge. Os commits são pequen
 | #28 | Workflow de deploy (aguarda o segredo) | #18 (aberta) |
 | este PR | Documentação final | #20 |
 
-Ainda abertas: #14 (cabeçalhos de segurança e Chart.js local), #17 (testes ponta a ponta), #18 (segredo do
-deploy), #21 (prova de persistência e evidências) e #22 (redesenho das telas). As issues #2 a #8 são os papéis
+Ainda abertas: #17 (testes ponta a ponta), #18 (segredo do deploy) e #21 (prova de persistência e evidências). As issues #2 a #8 são os papéis
 de cada integrante e a #10 é o checklist técnico de integração; ficam com os responsáveis.
 
 ## 11. Dificuldade superada
@@ -273,8 +273,8 @@ de cada integrante e a #10 é o checklist técnico de integração; ficam com os
 **Limitações:**
 - Faltam os prints da prova de persistência (E2), que dependem da palavra do dia, e o teste do professor (PROF-HHMM).
 - O deploy automático está desligado até alguém com permissão de administrador cadastrar o segredo (#18).
-- Os cabeçalhos de segurança (CSP, HSTS) e o Chart.js local ainda não foram aplicados (#14), e os formulários
-  de login e de avaliação ainda não declaram `method="post"` (#22); o ZAP aponta esses itens como abertos.
+- A CSP, o HSTS e o Chart.js local já estão no código (#14), mas o ZAP só deixa de apontá-los quando rodar de novo
+  contra a versão publicada na Azure.
 - Um único gestor, definido por variáveis de ambiente, sem cadastro, sem recuperação de senha e sem segundo fator.
 - A sessão do gestor não é revogada no servidor: o logout apaga o cookie do navegador, e um cookie roubado vale
   até vencer (8 horas). Trocar `SESSAO_SEGREDO` invalida todas as sessões.
@@ -288,7 +288,7 @@ de cada integrante e a #10 é o checklist técnico de integração; ficam com os
 - Não há teste automatizado do painel em navegador real (#17) nem alta disponibilidade do banco (um servidor B1ms).
 
 **Próximos passos:** registrar a prova de persistência com o `G01-PALAVRA` do dia (roteiro em `evidencias/`); gravar
-o pitch de 90 segundos; fechar as issues #14, #17, #18 e #22; preencher a seção de dificuldade superada; parar o
+o pitch de 90 segundos; fechar as issues #17, #18 e #21; preencher a seção de dificuldade superada; parar o
 servidor PostgreSQL ao final da aula e excluir o grupo de recursos `rg-cloud-g01` na data indicada pelo professor.
 
 ## 13. Equipe e responsabilidades

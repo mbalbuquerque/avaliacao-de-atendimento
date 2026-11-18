@@ -101,16 +101,26 @@ estudante e o acesso do gestor à moderação.
   (código, banco, .env)"; seguranca: "login e logout de outra origem (CSRF) são bloqueados"; "travessia de
   diretório e arquivos ocultos não são servidos"; "não existem rotas destrutivas: DELETE, PUT e PATCH nas
   avaliações retornam 404".
-- **Risco que continua aberto (nada disto está aplicado ainda):**
-  - **Content-Security-Policy, Strict-Transport-Security, `frame-ancestors`/anti-clickjacking e
-    Permissions-Policy ainda não existem.** Estão na issue #14, em andamento. O HTTPS já é obrigatório no App
-    Service, mas a aplicação ainda não envia o cabeçalho HSTS.
-  - O painel carrega o Chart.js de um CDN (`cdn.jsdelivr.net`) sem verificação de integridade; a troca por uma
-    cópia servida pelo próprio servidor também é parte da issue #14 e do redesenho (#22).
-  - **Os formulários de login (`admin-login.html`) e de avaliação (`index.html`) ainda não declaram
-    `method="post"`.** Se o JavaScript não carregar no momento do envio, o navegador usa GET e o usuário e a
-    senha do gestor, ou o comentário, vão para a URL. Foi achado pelo ZAP e verificado no código; a correção
-    entra no redesenho das telas (issue #22).
+- **Cabeçalhos de segurança (issue #14, aplicados):** Content-Security-Policy com `default-src 'none'`,
+  `script-src 'self'`, `style-src 'self'`, `frame-ancestors 'none'`, `form-action 'self'`, `base-uri 'none'` e
+  `object-src 'none'` (sem `unsafe-inline`, `unsafe-eval` nem CDN); HSTS de um ano com `includeSubDomains`;
+  `X-Frame-Options: DENY`; COOP, CORP e COEP; Permissions-Policy; cache `no-cache` nas páginas e `no-store` na
+  API (`helmet` em `src/app.js`). Limite geral de 600 requisições por minuto por IP, em memória, sem gravar o IP
+  (`express-rate-limit`), além dos limites de login e de avaliações.
+- **Front compatível com a CSP:** páginas sem script, estilo ou manipulador inline e sem recurso de outro endereço;
+  Chart.js servido por `/vendor/chart.umd.js` (versão fixa no `package-lock.json`); formulários com
+  `method="post"` e `action`, então sem JavaScript nada vai para a URL (achado do ZAP, corrigido); sem
+  `innerHTML` em `js/` (issue #36): o texto das avaliações entra como nó de texto (`js/dom.js`).
+- **Testes:** cabecalhos: "a CSP só aceita o próprio servidor"; "páginas, API e 404 trazem HSTS, anti-clickjacking,
+  COOP/CORP/COEP e Permissions-Policy"; "cache: páginas são revalidadas, a API nunca é guardada"; "Chart.js sai
+  do próprio servidor"; "acima do limite por minuto responde 429"; e os quatro testes de "front-end compatível
+  com a CSP" (sem inline, sem recurso externo, formulários com post, sem eval nem innerHTML); xss: as cargas
+  de XSS voltam como texto e o front não tem ponto de injeção de HTML.
+- **Risco que continua aberto:**
+  - A CSP foi provada por teste e no navegador de teste, mas a versão publicada na Azure só passa a mostrar os
+    cabeçalhos depois do próximo deploy; o ZAP semanal confirma o resultado.
+  - `style-src 'self'` bloqueia estilo inline: qualquer ajuste visual novo precisa ir para um arquivo `.css`.
+  - O limite por IP em memória some a cada reinício e não é compartilhado entre instâncias.
   - A senha do gestor e a do banco dependem de quem administra o App Service (seção 4).
 
 ### Outros riscos conhecidos
@@ -134,9 +144,9 @@ teste de invasão** nem os testes automatizados de comportamento.
 | **Dependabot** (`dependabot.yml`) | toda semana | abre pull request de atualização de npm e Actions | não avalia o impacto nem corrige sozinho |
 
 Resultado da primeira execução (18/11/2026): CodeQL e Gitleaks sem achados, `npm audit` sem vulnerabilidades,
-ZAP com 0 alertas altos e 14 avisos. Os avisos que são do nosso código (cabeçalhos ausentes, CDN sem integridade
-e os formulários sem `method`) **continuam abertos** e estão listados em T5 e nas issues #14 e #22. Eles só
-deixam de constar como abertos depois que uma nova execução do ZAP mostrar que sumiram.
+ZAP com 0 alertas altos e 14 avisos. Os avisos que eram do nosso código (cabeçalhos ausentes, CDN sem integridade
+e os formulários sem `method`) foram corrigidos nas issues #14, #22 e #36. Eles só deixam de constar como abertos
+depois que uma nova execução do ZAP, contra a versão publicada, mostrar que sumiram.
 
 ## 3. Segredos
 
