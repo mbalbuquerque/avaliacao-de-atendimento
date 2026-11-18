@@ -10,12 +10,12 @@ durante a aula; nos nomes de arquivo e nos comandos abaixo, troque `PALAVRA` por
 
 | Código | Evidência | Arquivo sugerido | Situação |
 |---|---|---|---|
-| E1 | Registro do ambiente: URL pública (Nível A) ou descrição do ambiente (Níveis B e C) | `E1-ambiente.png` | Aplicação Nível A publicada; print com data e hora pendente |
-| E2 | Prova de persistência: os quatro prints do registro `G01-PALAVRA` | `E2-print1-lista.png`, `E2-print2-iniciado-em-antes.png`, `E2-print3-depois-do-reinicio.png`, `E2-print4-consulta-sql.png` | Pendente |
-| E3 | Casos de teste: pelo menos 5, sendo 2 negativos, com esperado e obtido | `E3-testes.png` (saída de `npm test`) e a tabela do README | 70 testes automatizados e 16 e2e; print pendente |
+| E1 | Registro do ambiente: URL pública (Nível A) ou descrição do ambiente (Níveis B e C) | `E1-ambiente.png` | **Pronto**: `qa/E1-url-publica-e-health.png` |
+| E2 | Prova de persistência: os quatro prints do registro `G01-PALAVRA` | `E2-print1-lista.png`, `E2-print2-iniciado-em-antes.png`, `E2-print3-depois-do-reinicio.png`, `E2-print4-consulta-sql.png` | Ensaio pronto (`ensaio-persistencia/`); **oficial pendente da palavra do dia** |
+| E3 | Casos de teste: pelo menos 5, sendo 2 negativos, com esperado e obtido | `qa/E3-saida-dos-testes.png` e a tabela do README | **Pronto**: 109 testes e 27 e2e (`qa/`) |
 | E4 | Diagrama de arquitetura | no README (mermaid) | Pronto |
-| E5 | Configuração segura: print das variáveis de ambiente com o valor oculto e o `.gitignore` com `.env` | `E5-variaveis-ocultas.png`, `E5-gitignore.png` | Variáveis já configuradas no App Service; prints pendentes |
-| E6 | README completo e link do vídeo do pitch de 90 segundos | README + `E6-pitch.txt` com o link | README pronto; vídeo pendente |
+| E5 | Configuração segura: print das variáveis de ambiente com o valor oculto e o `.gitignore` com `.env` | `E5-variaveis-ocultas.png`, `E5-gitignore.png` | **Pronto**: `qa/E5-variaveis-e-gitignore.png` |
+| E6 | README completo e link do vídeo do pitch de 90 segundos | README + `E6-pitch.txt` com o link | README pronto; **vídeo pendente** |
 
 Se o ambiente for o Nível C (local), o E1 é a descrição do ambiente (versões, comandos) com prints do
 terminal e do navegador.

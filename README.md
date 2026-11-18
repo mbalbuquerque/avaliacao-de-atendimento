@@ -50,6 +50,8 @@ o grupo desce para o Nível B ou C e registra o motivo no painel da turma.
 | RF04 | Menos de 3 avaliações mostra "amostra insuficiente" no lugar da média (regra central) | **Pronto e testado** (`media: null`, `amostra_suficiente: false`) |
 | RF05 | Moderação: o gestor oculta comentário; a nota continua contando (regra central) | **Implementado e testado** (`PATCH /api/admin/avaliacoes/{id}`) |
 
+**Para entender e apresentar o projeto (o que o professor pediu, o que foi feito, como funciona, roteiro da noite e pitch): [docs/guia-do-projeto.md](docs/guia-do-projeto.md).**
+
 Regras detalhadas, cada uma com o teste que a prova: [docs/regras-de-negocio.md](docs/regras-de-negocio.md).
 Contrato das rotas: [docs/contrato-api.md](docs/contrato-api.md). Requisições prontas: [requests.http](requests.http).
 Modelo de ameaças: [docs/seguranca.md](docs/seguranca.md).
