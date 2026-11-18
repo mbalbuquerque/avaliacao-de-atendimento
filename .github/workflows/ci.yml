@@ -1,0 +1,29 @@
+name: CI
+
+# Roda os testes a cada push e pull request. Os testes usam um PostgreSQL em
+# memória (PGlite) com o mesmo banco/schema.sql da produção: não precisam de
+# banco externo nem de segredos.
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  testes:
+    name: Testes (Node 20)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Rodar os testes
+        run: npm test
