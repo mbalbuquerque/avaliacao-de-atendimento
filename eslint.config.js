@@ -10,6 +10,11 @@ module.exports = [
     languageOptions: { sourceType: "commonjs", globals: globals.node }
   },
   {
+    // Os testes e2e também escrevem funções que rodam dentro do navegador (page.evaluate).
+    files: ["tests/e2e/**/*.js"],
+    languageOptions: { sourceType: "commonjs", globals: { ...globals.node, ...globals.browser } }
+  },
+  {
     files: ["js/**/*.js"],
     languageOptions: {
       sourceType: "script",

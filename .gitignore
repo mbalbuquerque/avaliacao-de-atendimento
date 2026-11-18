@@ -7,3 +7,7 @@
 node_modules/
 *.log
 .DS_Store
+
+# Relatórios dos testes e2e
+playwright-report/
+test-results/
