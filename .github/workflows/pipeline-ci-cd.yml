@@ -1,0 +1,377 @@
+# =============================================================================
+# Avalie o Atendimento - Pipeline CI/CD Estrita
+# Regra Estrita: Proibido o uso da tag :latest (sempre versoes fixas/LTS)
+#
+# Etapas:
+#   1. Seguranca: Gitleaks (secrets), Mapeamento de CVEs (npm audit) e Anti-Latest
+#   2. Build e Integracao: Dependencias limpas e Testes com Cobertura 100%
+#   3. QA e Validacao de Codigo: ESLint e Analise Sintatica
+#   4. Seguranca Docker: Trivy Scan (vulnerabilidades na imagem Node 22 Alpine)
+#   5. Smoke Test Docker: Health check real no container Node.js (/health)
+#   6. Docker Compose Build: Validacao sintatica do compose e Dockerfile
+#   7. Deploy em Producao: Publicacao no Azure App Service com Publish Profile e /health check
+# =============================================================================
+
+name: "Avalie o Atendimento - Pipeline CI/CD"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+  security-events: write
+
+concurrency:
+  group: deploy-azure-prod
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "22.12.0"
+  DOCKER_IMAGE_NAME: avaliacao-atendimento
+  APP_NOME: app-cloud-g01-en
+  APP_URL: https://app-cloud-g01-en.azurewebsites.net
+
+jobs:
+  # =========================================================================
+  # 1. SEGURANCA E AUDITORIA DE CODIGO
+  # =========================================================================
+  security-and-cve:
+    name: "1. Seguranca, Secrets e CVEs"
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout do Codigo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Escaneamento de Segredos com Gitleaks
+        run: |
+          echo "Iniciando verificacao de segredos no historico..."
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.18.4/gitleaks_8.18.4_linux_x64.tar.gz | sudo tar -xz -C /usr/local/bin gitleaks
+          gitleaks detect -v --redact
+
+      - name: Configuracao do Node.js v${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Instalacao de Dependencias
+        run: npm ci
+
+      - name: Auditoria e Mapeamento de CVEs (npm audit)
+        run: |
+          echo "=========================================================="
+          echo "Auditoria de Seguranca de Dependencias (npm audit)"
+          echo "=========================================================="
+          npm audit --audit-level=high --omit=dev 2>&1 | tee cve-audit-report.txt
+          npm audit --audit-level=high --omit=dev
+
+      - name: Verificacao Estrita Anti-Latest
+        run: |
+          echo "Verificando se ha ocorrencias da tag proibida ':latest'..."
+          if grep -rnEi 'image:\s*.*:latest' docker-compose*.yml 2>/dev/null; then
+            echo "[ERRO] Uso de ':latest' detectado no docker-compose. Use versoes fixas/LTS."
+            exit 1
+          fi
+          if grep -rnEi 'FROM\s+.*:latest' Dockerfile* 2>/dev/null; then
+            echo "[ERRO] Dockerfile utilizando imagem base ':latest'. Use versoes fixas."
+            exit 1
+          fi
+          echo "[OK] Nenhuma referencia a ':latest' encontrada."
+
+      - name: Upload do Relatorio de Seguranca
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cve-audit-report
+          path: cve-audit-report.txt
+          retention-days: 15
+
+  # =========================================================================
+  # 2. BUILD E INTEGRACAO (TESTES COM COBERTURA)
+  # =========================================================================
+  build-and-integration:
+    name: "2. Build e Integracao"
+    runs-on: ubuntu-24.04
+    needs: [security-and-cve]
+    steps:
+      - name: Checkout do Codigo
+        uses: actions/checkout@v4
+
+      - name: Configuracao do Node.js v${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Instalacao Limpa de Dependencias
+        run: npm ci
+
+      - name: Execucao dos Testes Automatizados com Cobertura Minima
+        run: |
+          echo "Executando testes com cobertura estrita (100% linhas em src/)..."
+          npm run test:cobertura
+
+  # =========================================================================
+  # 3. QA E VALIDACAO DE CODIGO
+  # =========================================================================
+  qa-and-lint:
+    name: "3. QA e Validacao Estatica (Lint)"
+    runs-on: ubuntu-24.04
+    needs: [build-and-integration]
+    steps:
+      - name: Checkout do Codigo
+        uses: actions/checkout@v4
+
+      - name: Configuracao do Node.js v${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Instalacao de Dependencias
+        run: npm ci
+
+      - name: Analise Estatica de Codigo com ESLint
+        run: |
+          echo "Executando analise estatica de qualidade de codigo..."
+          npm run lint
+
+  # =========================================================================
+  # 4. SEGURANCA NA IMAGEM DOCKER (TRIVY)
+  # =========================================================================
+  docker-security-scan:
+    name: "4. Analise de Vulnerabilidades Docker (Trivy)"
+    runs-on: ubuntu-24.04
+    needs: [qa-and-lint]
+    steps:
+      - name: Checkout do Codigo
+        uses: actions/checkout@v4
+
+      - name: Construcao da Imagem Docker para Auditoria
+        run: |
+          echo "Compilando imagem Docker local para escaneamento de vulnerabilidades..."
+          docker build \
+            --tag ${{ env.DOCKER_IMAGE_NAME }}:audit-${{ github.sha }} \
+            --file Dockerfile \
+            .
+
+      - name: Escaneamento de Seguranca Trivy (Falha em CRITICAL ou HIGH)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "${{ env.DOCKER_IMAGE_NAME }}:audit-${{ github.sha }}"
+          format: "table"
+          exit-code: 1
+          severity: "CRITICAL,HIGH"
+          ignore-unfixed: true
+
+  # =========================================================================
+  # 5. SMOKE TEST NA IMAGEM DOCKER
+  # =========================================================================
+  docker-smoke-test:
+    name: "5. Smoke Test - Validacao de Container"
+    runs-on: ubuntu-24.04
+    needs: [docker-security-scan]
+    steps:
+      - name: Checkout do Codigo
+        uses: actions/checkout@v4
+
+      - name: Compilacao da Imagem para Smoke Test
+        run: |
+          docker build \
+            --tag ${{ env.DOCKER_IMAGE_NAME }}:smoke-${{ github.sha }} \
+            --file Dockerfile \
+            .
+
+      - name: Inicializacao do Container Node.js
+        run: |
+          echo "Subindo container da aplicacao para teste de fumaca..."
+          docker run -d \
+            --name app-smoke-test \
+            -p 3000:3000 \
+            ${{ env.DOCKER_IMAGE_NAME }}:smoke-${{ github.sha }}
+
+      - name: Validacao do Healthcheck HTTP
+        run: |
+          echo "Aguardando resposta do endpoint /health..."
+          MAX_RETRIES=10
+          SUCCESS=false
+
+          for i in $(seq 1 $MAX_RETRIES); do
+            echo "Tentativa de conexao $i/$MAX_RETRIES..."
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/health || echo "000")
+            if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "503" ]; then
+              echo "[OK] Servidor Node.js respondeu com HTTP $HTTP_CODE na rota /health."
+              SUCCESS=true
+              break
+            fi
+            sleep 1
+          done
+
+          if [ "$SUCCESS" != "true" ]; then
+            echo "[FALHA] Smoke test falhou. Resposta inesperada."
+            docker logs app-smoke-test
+            exit 1
+          fi
+
+      - name: Limpeza dos Recursos Temporarios
+        if: always()
+        run: |
+          docker stop app-smoke-test 2>/dev/null || true
+          docker rm app-smoke-test 2>/dev/null || true
+
+  # =========================================================================
+  # 6. TESTE DE BUILD E SINTAXE DO DOCKER COMPOSE
+  # =========================================================================
+  docker-compose-build:
+    name: "6. Validacao do Docker Compose"
+    runs-on: ubuntu-24.04
+    needs: [docker-smoke-test]
+    steps:
+      - name: Checkout do Codigo
+        uses: actions/checkout@v4
+
+      - name: Validacao Anti-Latest em Docker Compose e Dockerfile
+        run: |
+          echo "Auditando arquivos contra a tag ':latest'..."
+          if grep -rnEi 'image:\s*.*:latest' docker-compose*.yml 2>/dev/null; then
+            echo "[ERRO] Tag ':latest' encontrada no docker-compose."
+            exit 1
+          fi
+          if grep -rnEi 'FROM\s+.*:latest' Dockerfile 2>/dev/null; then
+            echo "[ERRO] Tag ':latest' encontrada no Dockerfile."
+            exit 1
+          fi
+          echo "[OK] Nenhuma ocorrencia de ':latest' encontrada."
+
+      - name: Validacao Sintatica do Docker Compose
+        run: |
+          docker compose config --quiet
+          echo "[OK] Sintaxe do docker-compose validada com sucesso."
+
+  # =========================================================================
+  # 7. DEPLOY AUTOMATICO NA AZURE APP SERVICE
+  # Dispara SOMENTE quando o evento for push na main ou workflow_dispatch
+  # E TODAS as 6 etapas anteriores forem aprovadas com sucesso.
+  # =========================================================================
+  deploy-to-azure:
+    name: "7. Deploy Automatico para Azure"
+    runs-on: ubuntu-24.04
+    needs:
+      - security-and-cve
+      - build-and-integration
+      - qa-and-lint
+      - docker-security-scan
+      - docker-smoke-test
+      - docker-compose-build
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout do Codigo
+        uses: actions/checkout@v4
+
+      - name: Verificar se o Segredo de Publicacao esta Presente
+        id: checar_segredo
+        env:
+          PERFIL: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        run: |
+          if [ -z "$PERFIL" ]; then
+            echo "[ERRO] Segredo AZURE_WEBAPP_PUBLISH_PROFILE nao encontrado nos Secrets do GitHub."
+            exit 1
+          fi
+          echo "[OK] Segredo de publicacao localizado."
+
+      - name: Empacotar Codigo para Producao
+        run: |
+          echo "Empacotando versao limpa da aplicacao em app.zip..."
+          git archive --format=zip -o app.zip HEAD
+
+      - name: Publicar no Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.APP_NOME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: app.zip
+
+      - name: Validacao Pos-Deploy (/health com PostgreSQL)
+        run: |
+          echo "=========================================================="
+          echo "Validando saude da aplicacao publicada na Azure"
+          echo "URL: ${{ env.APP_URL }}/health"
+          echo "=========================================================="
+
+          SUCESSO=false
+          for tentativa in $(seq 1 20); do
+            echo "Tentativa $tentativa de 20: aguardando resposta..."
+            RESPOSTA=$(curl -s -m 15 "${{ env.APP_URL }}/health" || echo "")
+            if echo "$RESPOSTA" | grep -q '"database":"connected"'; then
+              echo "[OK] Aplicacao saudavel e banco PostgreSQL conectado na Azure: $RESPOSTA"
+              SUCESSO=true
+              break
+            fi
+            sleep 10
+          done
+
+          if [ "$SUCESSO" != "true" ]; then
+            echo "[FALHA] O /health nao confirmou o banco conectado apos o deploy."
+            exit 1
+          fi
+
+  # =========================================================================
+  # STATUS CONSOLIDADO DA PIPELINE
+  # =========================================================================
+  pipeline-summary:
+    name: "Status Consolidado da Pipeline"
+    runs-on: ubuntu-24.04
+    needs:
+      - security-and-cve
+      - build-and-integration
+      - qa-and-lint
+      - docker-security-scan
+      - docker-smoke-test
+      - docker-compose-build
+      - deploy-to-azure
+    if: always()
+    steps:
+      - name: Exibir Relatorio de Execucao
+        run: |
+          echo "=========================================================="
+          echo "Status Consolidado da Execucao da Pipeline"
+          echo "=========================================================="
+          echo "1. Seguranca e CVE:         ${{ needs.security-and-cve.result }}"
+          echo "2. Build e Integracao:      ${{ needs.build-and-integration.result }}"
+          echo "3. QA e Validacao Lint:     ${{ needs.qa-and-lint.result }}"
+          echo "4. Seguranca Docker:        ${{ needs.docker-security-scan.result }}"
+          echo "5. Smoke Test Docker:       ${{ needs.docker-smoke-test.result }}"
+          echo "6. Docker Compose Build:    ${{ needs.docker-compose-build.result }}"
+          echo "7. Deploy na Azure:         ${{ needs.deploy-to-azure.result }}"
+          echo "=========================================================="
+
+          # Falha se alguma etapa de teste/qualidade obrigatoria falhou
+          if [ "${{ needs.security-and-cve.result }}" != "success" ] || \
+             [ "${{ needs.build-and-integration.result }}" != "success" ] || \
+             [ "${{ needs.qa-and-lint.result }}" != "success" ] || \
+             [ "${{ needs.docker-security-scan.result }}" != "success" ] || \
+             [ "${{ needs.docker-smoke-test.result }}" != "success" ] || \
+             [ "${{ needs.docker-compose-build.result }}" != "success" ]; then
+            echo "[FALHA] Pipeline falhou nos testes de qualidade. Deploy bloqueado."
+            exit 1
+          fi
+
+          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            if [ "${{ needs.deploy-to-azure.result }}" != "success" ]; then
+              echo "[FALHA] Erro durante a execucao do deploy na Azure."
+              exit 1
+            fi
+            echo "[SUCESSO] Pipeline e deploy na Azure concluidos com sucesso!"
+          else
+            echo "[INFO] Pull Request ou validacao avulsa aprovada em todos os testes."
+          fi
+
