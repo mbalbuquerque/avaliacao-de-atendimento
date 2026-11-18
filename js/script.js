@@ -33,12 +33,12 @@ function safe(value) {
   );
 }
 
-function showMessage(text, type = "error") {
+function showMessage(text, type = "erro") {
   const element = $("formMessage");
   if (!element) return;
 
   element.textContent = text;
-  element.className = `message ${type}`;
+  element.className = `mensagem mensagem--${type === "ok" ? "ok" : "erro"}`;
 }
 
 function formatAverage(value) {
@@ -74,20 +74,16 @@ function setSending(active) {
     : button.dataset.originalText;
 }
 
+function starText(note) {
+  const value = Math.max(0, Math.min(5, Number(note) || 0));
+  return "★".repeat(value) + "☆".repeat(5 - value);
+}
+
 /* ==================================================
-   ESTRELAS
+   NOTA (grupo de botões de rádio, navegável por teclado)
 ================================================== */
 
-function drawStars() {
-  document.querySelectorAll("[data-score]").forEach(
-    button => {
-      const value = Number(button.dataset.score);
-
-      button.classList.toggle("active", value <= score);
-      button.setAttribute("aria-pressed", String(value === score));
-    }
-  );
-
+function updateRatingHint() {
   if ($("ratingHint")) {
     $("ratingHint").textContent = score
       ? `Nota selecionada: ${score} de 5`
@@ -95,13 +91,11 @@ function drawStars() {
   }
 }
 
-document.querySelectorAll("[data-score]").forEach(
-  button => {
-    button.addEventListener("click", () => {
-      if (sending) return;
-
-      score = Number(button.dataset.score);
-      drawStars();
+document.querySelectorAll('input[name="nota"]').forEach(
+  radio => {
+    radio.addEventListener("change", () => {
+      score = Number(radio.value);
+      updateRatingHint();
     });
   }
 );
@@ -171,48 +165,36 @@ function renderIndicators() {
       ? formatAverage(service.media)
       : null;
 
-    const counts = [1, 2, 3, 4, 5].map(
-      note => service.distribuicao[String(note)] || 0
+    const counts = [5, 4, 3, 2, 1].map(
+      note => ({ note, value: service.distribuicao[String(note)] || 0 })
     );
 
     return `
-      <article class="service-card">
-        <div class="service-top">
+      <li class="servico">
+        <div class="servico-topo">
           <div>
             <strong>${safe(service.nome)}</strong>
-            <small>
-              ${count}
-              ${count === 1 ? "avaliação" : "avaliações"}
-            </small>
+            <small>${count} ${count === 1 ? "avaliação" : "avaliações"}</small>
           </div>
 
           ${
             average === null
-              ? '<span class="insufficient">Amostra insuficiente</span>'
-              : `<span class="average">${average} <small>★</small></span>`
+              ? '<span class="selo selo--aviso">Amostra insuficiente</span>'
+              : `<span class="media">${average} <small aria-hidden="true">★</small><span class="sr-only">de 5</span></span>`
           }
         </div>
 
-        <div
-          class="distribution"
-          aria-label="Distribuição das notas 1 a 5"
-        >
-          ${counts.map(value => `
-            <span>
-              <i style="width:${
-                count ? value / count * 100 : 0
-              }%"></i>
-            </span>
+        <ul class="distribuicao" aria-label="Distribuição das notas de ${safe(service.nome)}">
+          ${counts.map(({ note, value }) => `
+            <li>
+              <span>${note}★</span>
+              <progress class="barra" max="100" value="${count ? Math.round(value / count * 100) : 0}"
+                aria-label="${note} estrelas: ${value} de ${count}"></progress>
+              <span class="quantidade">${value}</span>
+            </li>
           `).join("")}
-        </div>
-
-        <div class="distribution-label">
-          Distribuição de notas:
-          ${counts.map(
-            (value, index) => `${index + 1}★ ${value}`
-          ).join(" · ")}
-        </div>
-      </article>
+        </ul>
+      </li>
     `;
   }).join("");
 }
@@ -225,25 +207,18 @@ function renderComments() {
   if (!$("comments")) return;
 
   $("comments").innerHTML = publicComments.length
-    ? publicComments.map(item => {
-        const stars = Number.isInteger(Number(item.nota))
-          ? "★".repeat(
-              Math.max(0, Math.min(5, Number(item.nota)))
-            )
-          : "";
+    ? publicComments.map(item => `
+        <li class="comentario">
+          <header>
+            <strong>${safe(item.servico)}</strong>
+            <span class="nota-estrelas" role="img"
+              aria-label="Nota ${safe(item.nota)} de 5">${starText(item.nota)}</span>
+          </header>
 
-        return `
-          <article class="comment-item">
-            <header>
-              <span>${safe(item.servico)}</span>
-              <span>${stars}</span>
-            </header>
-
-            <p>${safe(item.comentario)}</p>
-          </article>
-        `;
-      }).join("")
-    : '<p class="empty">Nenhum comentário público registrado ainda.</p>';
+          <p>${safe(item.comentario)}</p>
+        </li>
+      `).join("")
+    : '<li class="vazio">Nenhum comentário público ainda. Seja a primeira pessoa a comentar.</li>';
 }
 
 /* ==================================================
@@ -277,10 +252,11 @@ function showLoadError() {
 
   if (box) {
     box.innerHTML = `
-      <p class="empty">
+      <li class="vazio">
         Não foi possível carregar os indicadores agora.
-        <button type="button" id="retryLoad">Tentar de novo</button>
-      </p>
+        <br>
+        <button type="button" class="btn btn-secundaria" id="retryLoad">Tentar de novo</button>
+      </li>
     `;
 
     $("retryLoad").addEventListener("click", initialize);
@@ -349,7 +325,7 @@ async function submitReview(event) {
 
     $("reviewForm").reset();
     score = 0;
-    drawStars();
+    updateRatingHint();
     $("chars").textContent = `0/${MAX_COMMENT}`;
 
     showMessage("Avaliação recebida pelo servidor com sucesso!", "ok");
@@ -383,11 +359,11 @@ async function submitReview(event) {
 ================================================== */
 
 async function initialize() {
-  drawStars();
+  updateRatingHint();
 
   if ($("services")) {
     $("services").innerHTML =
-      '<p class="empty">Carregando indicadores…</p>';
+      '<li class="esqueleto" aria-hidden="true"></li><li class="esqueleto" aria-hidden="true"></li>';
   }
 
   try {
