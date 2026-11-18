@@ -1,0 +1,24 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: avaliacao-atendimento:prod
+    container_name: cpa_avaliacao_app
+    restart: always
+    environment:
+      PORT: 3000
+      DATABASE_URL: ${DATABASE_URL:-}
+      ADMIN_USUARIO: ${ADMIN_USUARIO:-gestor}
+      ADMIN_SENHA_HASH: ${ADMIN_SENHA_HASH:-}
+      SESSAO_SEGREDO: ${SESSAO_SEGREDO:-}
+    networks:
+      - cpa_internal
+    ports:
+      - "3000:3000"
+
+networks:
+  cpa_internal:
+    name: cpa_internal
+    driver: bridge
+
