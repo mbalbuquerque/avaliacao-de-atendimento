@@ -1,0 +1,619 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Avalie o Atendimento — API",
+    "version": "1.2.0",
+    "description": "API REST para coleta e consolidação de avaliações anônimas de serviços institucionais (Secretaria, Biblioteca, Cantina e Laboratórios) com painel analítico de indicadores e moderação administrativa (Cloud Challenge, Desafio 13).\n\n### Princípios de Design e Segurança:\n- **Anonimato Real:** Avaliações de estudantes não requerem login e nenhum IP é persistido em banco de dados ou logs.\n- **Integridade Declarativa:** Notas inteiras restritas entre 1 e 5 no PostgreSQL, comentários até 280 caracteres.\n- **Regra da Amostra Insuficiente:** Serviços com menos de 3 avaliações retornam `media: null` e flag `amostra_suficiente: false`.\n- **Moderação Neutra:** Gestores autenticados podem ocultar comentários impróprios sem desconsiderar a nota no cálculo estatístico da média.",
+    "contact": {
+      "name": "Cloud Challenge — Grupo 1 (SENAC 2026.2)",
+      "url": "https://github.com/mbalbuquerque/avaliacao-de-atendimento"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://app-cloud-g01-en.azurewebsites.net",
+      "description": "Ambiente de Produção (Azure App Service)"
+    },
+    {
+      "url": "http://localhost:3000",
+      "description": "Ambiente de Desenvolvimento Local"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Público",
+      "description": "Rotas abertas para estudantes (avaliação, indicadores e consulta de serviços)"
+    },
+    {
+      "name": "Moderação (Gestor)",
+      "description": "Rotas administrativas protegidas por cookie HttpOnly de sessão"
+    },
+    {
+      "name": "Sistema",
+      "description": "Sondas de monitoramento e integridade operacional"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["Sistema"],
+        "summary": "Healthcheck e sonda de integridade do banco de dados",
+        "description": "Verifica se o servidor Node.js está operacional e executa 'SELECT 1' no banco de dados PostgreSQL. Retorna o timestamp de inicialização ('iniciado_em') para prova de reinício.",
+        "responses": {
+          "200": {
+            "description": "Aplicação saudável e banco de dados conectado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthOk"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Servidor ativo, mas banco de dados PostgreSQL indisponível",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthErro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/servicos": {
+      "get": {
+        "tags": ["Público"],
+        "summary": "Listar serviços disponíveis para avaliação",
+        "description": "Retorna os serviços pré-cadastrados no sistema (Secretaria, Biblioteca, Cantina, Laboratórios) para preenchimento dos formulários de avaliação.",
+        "responses": {
+          "200": {
+            "description": "Lista de serviços cadastrados",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Servico"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/503Banco"
+          }
+        }
+      }
+    },
+    "/api/avaliacoes": {
+      "post": {
+        "tags": ["Público"],
+        "summary": "Registrar avaliação anônima de um serviço",
+        "description": "Submete uma avaliação anônima. Requer nota inteira de 1 a 5. Comentário é opcional (máximo 280 caracteres). Limitado a 30 avaliações por minuto por IP em memória.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NovaAvaliacao"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Avaliação registrada com sucesso no PostgreSQL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvaliacaoSucesso"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida (nota fora do intervalo 1-5, comentário > 280 caracteres, campos em formato incorreto)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacao"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Serviço informado não existe",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroSimples"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de taxa excedido (mais de 30 avaliações no último minuto)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroSimples"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/503Banco"
+          }
+        }
+      }
+    },
+    "/api/indicadores": {
+      "get": {
+        "tags": ["Público"],
+        "summary": "Obter indicadores consolidados por serviço",
+        "description": "Retorna as estatísticas consolidadas por serviço calculadas diretamente via SQL: média com 1 casa decimal, quantidade total e contagem por estrela (1 a 5). Serviços com menos de 3 avaliações retornam `media: null` e `amostra_suficiente: false`.",
+        "responses": {
+          "200": {
+            "description": "Indicadores consolidados de todos os serviços",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/IndicadorServico"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/503Banco"
+          }
+        }
+      }
+    },
+    "/api/comentarios": {
+      "get": {
+        "tags": ["Público"],
+        "summary": "Listar comentários públicos recentes",
+        "description": "Retorna os últimos 100 comentários que contêm texto e não foram ocultados pela moderação, ordenados do mais recente para o mais antigo.",
+        "responses": {
+          "200": {
+            "description": "Lista de comentários públicos visíveis",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ComentarioPublico"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/503Banco"
+          }
+        }
+      }
+    },
+    "/api/admin/login": {
+      "post": {
+        "tags": ["Moderação (Gestor)"],
+        "summary": "Autenticar gestor para moderação",
+        "description": "Autentica o gestor institucional comparando o hash criptográfico scrypt. Em caso de sucesso, emite um cookie de sessão assinado com HMAC-SHA256 (`HttpOnly; SameSite=Strict; Secure`). Limitado a 10 tentativas a cada 15 minutos.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredenciaisLogin"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login realizado com sucesso",
+            "headers": {
+              "Set-Cookie": {
+                "description": "Cookie de sessão 'sessao' assinado",
+                "schema": {
+                  "type": "string",
+                  "example": "sessao=eyJ1IjoiZ2VzdG9yIi...; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800; Secure"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "usuario": {
+                      "type": "string",
+                      "example": "gestor"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Usuário ou senha incorretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroSimples"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Muitas tentativas de login no intervalo",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroSimples"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Moderação não configurada no servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroSimples"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/logout": {
+      "post": {
+        "tags": ["Moderação (Gestor)"],
+        "summary": "Encerrar sessão de moderação",
+        "description": "Invalida o cookie de sessão do gestor no navegador.",
+        "responses": {
+          "200": {
+            "description": "Sessão encerrada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mensagem": {
+                      "type": "string",
+                      "example": "Sessão encerrada."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/me": {
+      "get": {
+        "tags": ["Moderação (Gestor)"],
+        "summary": "Obter dados do gestor autenticado",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Identificação do gestor em sessão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "usuario": {
+                      "type": "string",
+                      "example": "gestor"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401NaoAutenticado"
+          }
+        }
+      }
+    },
+    "/api/admin/avaliacoes": {
+      "get": {
+        "tags": ["Moderação (Gestor)"],
+        "summary": "Listar todas as avaliações para moderação",
+        "description": "Retorna até 500 avaliações recentes (incluindo comentários ocultados e avaliações sem comentário) com o status de visibilidade (`oculta: boolean`).",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de avaliações para o painel de moderação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AvaliacaoAdmin"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401NaoAutenticado"
+          },
+          "503": {
+            "$ref": "#/components/responses/503Banco"
+          }
+        }
+      }
+    },
+    "/api/admin/avaliacoes/{id}": {
+      "patch": {
+        "tags": ["Moderação (Gestor)"],
+        "summary": "Ocultar ou reexibir comentário",
+        "description": "Atualiza a visibilidade de uma avaliação (`oculta: true/false`). A nota continua sendo computada na média e nas contagens, preservando a neutralidade estatística.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador único inteiro da avaliação",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["oculta"],
+                "properties": {
+                  "oculta": {
+                    "type": "boolean",
+                    "description": "true para ocultar o comentário; false para reexibir publicamente"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status de visibilidade alterado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "integer", "example": 12 },
+                    "oculta": { "type": "boolean", "example": true }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Identificador inválido ou campo oculta não booleano",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroSimples"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401NaoAutenticado"
+          },
+          "404": {
+            "description": "Avaliação não encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroSimples"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/503Banco"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "sessao",
+        "description": "Cookie assinado gerado em POST /api/admin/login (HttpOnly, SameSite=Strict, Secure)."
+      }
+    },
+    "responses": {
+      "401NaoAutenticado": {
+        "description": "Sessão não autenticada, expirada ou inválida",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErroSimples"
+            }
+          }
+        }
+      },
+      "503Banco": {
+        "description": "Banco de dados PostgreSQL temporariamente indisponível",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErroSimples"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Servico": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "nome": { "type": "string", "example": "Secretaria" }
+        }
+      },
+      "NovaAvaliacao": {
+        "type": "object",
+        "required": ["servico_id", "nota"],
+        "properties": {
+          "servico_id": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 32767,
+            "description": "ID do serviço avaliado",
+            "example": 1
+          },
+          "nota": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "Nota inteira de 1 a 5",
+            "example": 5
+          },
+          "comentario": {
+            "type": "string",
+            "maxLength": 280,
+            "nullable": true,
+            "description": "Comentário opcional (até 280 caracteres)",
+            "example": "Atendimento rápido e equipe muito prestativa."
+          }
+        }
+      },
+      "AvaliacaoSucesso": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 142 },
+          "mensagem": { "type": "string", "example": "Avaliação registrada com sucesso." }
+        }
+      },
+      "IndicadorServico": {
+        "type": "object",
+        "properties": {
+          "servico_id": { "type": "integer", "example": 1 },
+          "nome": { "type": "string", "example": "Secretaria" },
+          "quantidade": { "type": "integer", "example": 6 },
+          "media": {
+            "type": "number",
+            "format": "float",
+            "nullable": true,
+            "example": 4.2,
+            "description": "Média aritmética com 1 casa decimal. Retorna null quando amostra_suficiente for false."
+          },
+          "amostra_suficiente": {
+            "type": "boolean",
+            "example": true,
+            "description": "true quando a quantidade for >= 3; false caso contrário."
+          },
+          "distribuicao": {
+            "type": "object",
+            "properties": {
+              "1": { "type": "integer", "example": 0 },
+              "2": { "type": "integer", "example": 0 },
+              "3": { "type": "integer", "example": 1 },
+              "4": { "type": "integer", "example": 3 },
+              "5": { "type": "integer", "example": 2 }
+            }
+          }
+        }
+      },
+      "ComentarioPublico": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 18 },
+          "servico": { "type": "string", "example": "Biblioteca" },
+          "nota": { "type": "integer", "minimum": 1, "maximum": 5, "example": 5 },
+          "comentario": { "type": "string", "example": "Ambiente silencioso e excelente acervo." },
+          "criada_em": { "type": "string", "format": "date-time", "example": "2026-11-18T17:30:00.000Z" }
+        }
+      },
+      "AvaliacaoAdmin": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 18 },
+          "servico": { "type": "string", "example": "Biblioteca" },
+          "nota": { "type": "integer", "minimum": 1, "maximum": 5, "example": 5 },
+          "comentario": { "type": "string", "nullable": true, "example": "Comentário sob moderação." },
+          "oculta": { "type": "boolean", "example": false },
+          "criada_em": { "type": "string", "format": "date-time", "example": "2026-11-18T17:30:00.000Z" }
+        }
+      },
+      "CredenciaisLogin": {
+        "type": "object",
+        "required": ["usuario", "senha"],
+        "properties": {
+          "usuario": { "type": "string", "example": "gestor" },
+          "senha": { "type": "string", "format": "password", "example": "senha-do-gestor" }
+        }
+      },
+      "HealthOk": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "example": "ok" },
+          "database": { "type": "string", "example": "connected" },
+          "iniciado_em": { "type": "string", "format": "date-time", "example": "2026-11-18T17:57:40.632Z" }
+        }
+      },
+      "HealthErro": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "example": "erro" },
+          "database": { "type": "string", "example": "unavailable" },
+          "iniciado_em": { "type": "string", "format": "date-time", "example": "2026-11-18T17:57:40.632Z" }
+        }
+      },
+      "ErroSimples": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string", "example": "Recurso não encontrado." }
+        }
+      },
+      "ErroValidacao": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string", "example": "nota deve ser um número inteiro de 1 a 5." },
+          "erros": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["nota deve ser um número inteiro de 1 a 5."]
+          }
+        }
+      }
+    }
+  }
+}
+

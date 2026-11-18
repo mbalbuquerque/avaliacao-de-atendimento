@@ -6,8 +6,10 @@ const express = require("express");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const path = require("path");
+const swaggerUi = require("swagger-ui-express");
 const { validarAvaliacao } = require("./validacao");
 const auth = require("./auth");
+const openapiDocument = require("./openapi.json");
 
 const RAIZ = path.join(__dirname, "..");
 const ID_MAXIMO = 2147483647; // limite do tipo INTEGER do PostgreSQL
@@ -308,6 +310,23 @@ function criarApp(db, opcoes = {}) {
       falhaDeBanco(res, erro);
     }
   }));
+
+  // ---------------------------------------------------------------- swagger / documentação
+
+  app.get("/api/docs/openapi.json", (req, res) => res.json(openapiDocument));
+  app.get("/docs/openapi.json", (req, res) => res.json(openapiDocument));
+
+  const swaggerCsp = (req, res, next) => {
+    res.setHeader(
+      "Content-Security-Policy",
+      "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'"
+    );
+    next();
+  };
+  app.use("/docs", swaggerCsp, swaggerUi.serve, swaggerUi.setup(openapiDocument, {
+    customSiteTitle: "Avalie o Atendimento — Swagger UI"
+  }));
+  app.use("/api/docs", (req, res) => res.redirect("/docs"));
 
   app.use("/api", (req, res) => res.status(404).json({ message: "Recurso não encontrado." }));
 
