@@ -1,0 +1,49 @@
+name: Segurança
+
+# Gitleaks: procura segredos no código e em todo o histórico do Git.
+# ZAP baseline: varredura PASSIVA da aplicação publicada (observa respostas, não ataca).
+# Roda sob demanda, toda segunda-feira e quando o package-lock.json ou este arquivo mudam na main.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 9 * * 1"
+  push:
+    branches: [main]
+    paths:
+      - "package-lock.json"
+      - ".github/workflows/seguranca.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  gitleaks:
+    name: Gitleaks (segredos no histórico)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  zap:
+    name: ZAP baseline (varredura passiva)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Rodar o ZAP contra a aplicação publicada
+        run: |
+          mkdir -p zap && chmod 777 zap
+          # -I: avisos não derrubam o job; só falha se o ZAP não conseguir rodar.
+          docker run --rm -v "$PWD/zap:/zap/wrk/:rw" ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py -t https://app-cloud-g01-en.azurewebsites.net/ \
+            -r relatorio-zap.html -w relatorio-zap.md -I
+
+      - name: Guardar o relatório
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-zap
+          path: zap/
