@@ -20,6 +20,11 @@ on:
 permissions:
   contents: read
 
+# Endereço da aplicação publicada: variável do repositório APP_URL (ou AZURE_WEBAPP_NAME);
+# sem elas vale o padrão do projeto.
+env:
+  APP_URL: ${{ vars.APP_URL || format('https://{0}.azurewebsites.net', vars.AZURE_WEBAPP_NAME || 'app-cloud-g01-en') }}
+
 jobs:
   gitleaks:
     name: Gitleaks (segredos no histórico)
@@ -42,7 +47,7 @@ jobs:
           mkdir -p zap && chmod 777 zap
           # -I: avisos não derrubam o job; só falha se o ZAP não conseguir rodar.
           docker run --rm -v "$PWD/zap:/zap/wrk/:rw" ghcr.io/zaproxy/zaproxy:stable \
-            zap-baseline.py -t https://app-cloud-g01-en.azurewebsites.net/ \
+            zap-baseline.py -t "$APP_URL/" \
             -r relatorio-zap.html -w relatorio-zap.md -I
 
       - name: Guardar o relatório

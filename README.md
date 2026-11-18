@@ -159,6 +159,26 @@ npm run auditar                      # npm audit das dependências de produção
 | `SESSAO_SEGREDO` | Segredo de 32 caracteres ou mais que assina a sessão do gestor |
 | `TEST_DATABASE_URL` | Só para testes: roda a suíte contra um PostgreSQL real (o CI usa um `postgres:16`) |
 
+Ajustes **opcionais** (todos têm padrão; valor inválido falha na subida com mensagem clara, nunca volta em silêncio
+para o padrão; a lógica está em `src/config.js` e os testes em `tests/config.test.js`):
+
+| Variável | Padrão | Para quê |
+|---|---|---|
+| `LIMITE_GERAL_POR_MINUTO` | 600 | Requisições por minuto por IP em todas as rotas (o `/health` nunca é limitado) |
+| `LIMITE_AVALIACOES_POR_MINUTO` | 30 | Avaliações enviadas por minuto por IP |
+| `LIMITE_LOGIN_TENTATIVAS` | 10 | Tentativas de login por IP dentro da janela abaixo |
+| `LIMITE_LOGIN_JANELA_MINUTOS` | 15 | Janela das tentativas de login |
+| `SESSAO_HORAS` | 8 | Validade da sessão do gestor, em horas (aceita decimais, ex.: `0,5`) |
+| `TAMANHO_MAXIMO_CORPO_KB` | 10 | Tamanho máximo do corpo de uma requisição (acima disso, 413) |
+| `COMENTARIOS_PUBLICOS_MAXIMO` | 100 | Quantos comentários a lista pública devolve |
+| `AVALIACOES_GESTOR_MAXIMO` | 500 | Quantas avaliações a lista do gestor devolve |
+| `BANCO_CONEXOES_MAXIMAS` | 5 | Tamanho do pool de conexões com o PostgreSQL |
+| `BANCO_TIMEOUT_CONEXAO_MS` | 5000 | Tempo máximo para conectar ao banco |
+| `BANCO_TIMEOUT_OCIOSO_MS` | 30000 | Tempo até fechar uma conexão ociosa |
+
+Os workflows do GitHub Actions leem as variáveis do **repositório** `AZURE_WEBAPP_NAME` e `APP_URL` (veja
+[docs/implantacao-azure.md](docs/implantacao-azure.md)); sem elas valem os padrões do projeto.
+
 Sem `DATABASE_URL` a aplicação sobe, mas as rotas de dados e o `/health` respondem **503**. Sem as
 variáveis do gestor o login responde 503 e nunca libera o acesso.
 

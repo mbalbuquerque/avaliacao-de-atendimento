@@ -2,8 +2,8 @@
 // e HMAC-SHA256 para assinar a sessão. Nada fica em texto puro no código.
 
 const crypto = require("crypto");
+const { lerConfig } = require("./config");
 
-const VALIDADE_MS = 8 * 60 * 60 * 1000; // sessão de 8 horas
 const COOKIE = "sessao";
 
 // Formato do hash guardado na variável de ambiente: scrypt$<sal em hex>$<hash em hex>
@@ -29,8 +29,9 @@ function assinar(texto, segredo) {
   return crypto.createHmac("sha256", segredo).update(texto).digest("base64url");
 }
 
-function criarSessao(usuario, segredo, agora = Date.now()) {
-  const carga = Buffer.from(JSON.stringify({ u: usuario, exp: agora + VALIDADE_MS })).toString("base64url");
+// A validade vem da configuração (SESSAO_HORAS); sem ela, o padrão de src/config.js.
+function criarSessao(usuario, segredo, agora = Date.now(), validadeMs = lerConfig().sessaoMs) {
+  const carga = Buffer.from(JSON.stringify({ u: usuario, exp: agora + validadeMs })).toString("base64url");
   return `${carga}.${assinar(carga, segredo)}`;
 }
 
@@ -67,4 +68,4 @@ function lerCookie(cabecalho, nome) {
   return null;
 }
 
-module.exports = { gerarHash, conferirSenha, criarSessao, lerSessao, lerCookie, COOKIE, VALIDADE_MS };
+module.exports = { gerarHash, conferirSenha, criarSessao, lerSessao, lerCookie, COOKIE };
