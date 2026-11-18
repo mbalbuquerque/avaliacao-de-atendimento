@@ -4,6 +4,7 @@ name: CI
 #  - qualidade: lint e testes com cobertura mínima (PostgreSQL em memória, PGlite)
 #  - postgres: a mesma suíte contra um PostgreSQL 16 real
 #  - dependencias: auditoria das dependências de produção
+#  - e2e: o painel em navegador real (Chromium) contra um PostgreSQL 16 real, sob a CSP verdadeira
 on:
   push:
   pull_request:
@@ -79,3 +80,64 @@ jobs:
 
       - name: Procurar vulnerabilidades conhecidas (produção)
         run: npm run auditar
+
+  e2e:
+    name: Testes e2e no navegador (PostgreSQL 16 real)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: teste
+          POSTGRES_PASSWORD: senha-de-teste-ci
+          POSTGRES_DB: avaliacao_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U teste -d avaliacao_e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Banco descartável do próprio job; o servidor de teste recria as tabelas a cada teste.
+      DATABASE_URL: postgres://teste:senha-de-teste-ci@localhost:5432/avaliacao_e2e
+      # Gestor de teste: a senha é só deste job (não existe em produção) e o hash é gerado aqui.
+      ADMIN_USUARIO: gestor
+      E2E_SENHA_GESTOR: senha-e2e-ci-descartavel
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Aplicar o banco (schema.sql e dados-iniciais.sql) no PostgreSQL real
+        run: npm run banco -- --dados
+
+      - name: Gerar o hash do gestor de teste e o segredo da sessão
+        run: |
+          echo "ADMIN_SENHA_HASH=$(npm run --silent hash -- "$E2E_SENHA_GESTOR")" >> "$GITHUB_ENV"
+          SEGREDO="$(openssl rand -hex 32)"
+          echo "::add-mask::$SEGREDO"
+          echo "SESSAO_SEGREDO=$SEGREDO" >> "$GITHUB_ENV"
+
+      - name: Instalar o Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Testes e2e
+        run: npm run test:e2e
+
+      - name: Guardar relatório e traços quando falhar
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: relatorio-e2e
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
