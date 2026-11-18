@@ -4,6 +4,7 @@
 
 **Disciplina:** Cloud Computing · **Professor:** Roni Maciel · **Desafio:** 13, Avalie o Atendimento (intermediária)
 **Repositório:** https://github.com/mbalbuquerque/avaliacao-de-atendimento
+**Aplicação publicada:** https://app-cloud-g01-en.azurewebsites.net
 **Código do grupo:** `G01` (a palavra do dia, `G01-PALAVRA`, é anunciada pelo professor)
 
 ## 1. Problema e usuário
@@ -16,33 +17,40 @@ uma média enganosa. O gestor pode ocultar comentários impróprios sem alterar 
 
 **Usuários:** estudantes (avaliam, sem login) e gestores (consultam os indicadores e moderam).
 
-## 2. Situação atual
+## 2. Situação atual (18/11/2026)
 
 | Item | Situação |
 |---|---|
-| API, regras de negócio e validação no servidor | **Implementadas e testadas** (30 de 30 testes passando na execução local) |
-| Banco PostgreSQL: tabelas, restrições, serviços iniciais e 20 avaliações fictícias | **Implementado** (`banco/schema.sql`, `banco/dados-iniciais.sql`) |
+| API, regras de negócio e validação no servidor | **Implementadas e testadas** |
+| Testes automatizados | **56 testes passando** (30 de API e regras, 20 de segurança, 6 de log), com **98,03% de linhas e 92,31% de ramos** cobertos em `src/` (medido em 18/11/2026; o CI exige no mínimo 90% e 80%) |
+| Banco PostgreSQL: tabelas, restrições, serviços iniciais e 20 avaliações fictícias | **Implementado** (`banco/schema.sql`, `banco/dados-iniciais.sql`, `banco/permissoes.sql`) |
 | `GET /health` com teste real do banco | **Implementado e testado** |
-| Moderação do gestor com autenticação no servidor | **Implementada e testada** (API e tela do gestor; cookie `HttpOnly`, `SameSite=Strict`, `Secure`) |
-| Integração do painel (formulário, dashboard, tela do gestor) com a API | **Concluída** (`js/config.js` em modo `api`; validada no Chrome contra PGlite e em produção) |
-| Implantação na Azure (App Service e PostgreSQL) | **Nível A implantado** em https://app-cloud-g01-en.azurewebsites.net (App Service Linux F1, Node 22 LTS, e PostgreSQL 16 Flexible Server B1ms, Brazil South); `/health` responde 200 com `database: connected`; HTTPS obrigatório; usuário do banco da aplicação com privilégios mínimos (`banco/permissoes.sql`) |
-| Evidências (prints da prova de persistência) e pitch de 90 s | **Pendentes** (lista e scripts em `evidencias/`) |
+| Moderação do gestor com autenticação no servidor | **Implementada e testada** (cookie `HttpOnly`, `SameSite=Strict`, `Secure`) |
+| Painel (formulário, dashboard, tela do gestor) integrado à API | **Concluído**; o modo demonstração e todo o `localStorage` de avaliações foram **removidos** (#15) |
+| Implantação na Azure (Nível A) | **Implantado** em https://app-cloud-g01-en.azurewebsites.net (App Service Linux F1, Node 22 LTS, e PostgreSQL 16 Flexible Server B1ms, Brazil South); `/health` responde 200 com `database: connected`; HTTPS obrigatório; usuário do banco da aplicação com privilégios mínimos |
+| CI (lint, testes com cobertura, PostgreSQL 16 real, auditoria, CodeQL, Gitleaks, ZAP semanal) | **Em funcionamento** (seção 8) |
+| CD (deploy automático) | **Workflow pronto, mas desligado**: falta cadastrar o segredo `AZURE_WEBAPP_PUBLISH_PROFILE`, que só um administrador do repositório consegue (#18). O deploy atual foi feito manualmente |
+| Cabeçalhos de segurança (CSP, HSTS) e Chart.js local | **Não aplicados ainda** (#14, em andamento) |
+| Redesenho de todas as telas | **Em andamento** (#22); os formulários ainda sem `method="post"` entram aí |
+| Testes ponta a ponta do painel em navegador | **Pendentes** (#17) |
+| Prova de persistência com a palavra do dia, teste do professor e pitch de 90 s | **Pendentes** (#21; roteiro e scripts em `evidencias/`) |
 
-Nível de implantação: a meta é o **Nível A**. Se a infraestrutura bloquear por 15 minutos, o grupo desce
-para o Nível B ou C e registra o motivo no painel da turma.
+Nível de implantação: a meta é o **Nível A**, que está alcançado. Se a infraestrutura bloquear por 15 minutos,
+o grupo desce para o Nível B ou C e registra o motivo no painel da turma.
 
 ## 3. Requisitos da ficha
 
 | Código | Requisito | Status |
 |---|---|---|
-| RF01 | Carregar os quatro serviços por script SQL inicial | **Pronto.** `banco/schema.sql` insere Secretaria, Biblioteca, Cantina e Laboratórios; teste `RF01` |
-| RF02 | Registrar avaliação anônima com nota inteira de 1 a 5 e comentário opcional de até 280 caracteres | **Implementado e testado** (`POST /api/avaliacoes`; formulário do painel integrado) |
-| RF03 | Painel por serviço: média com 1 casa, quantidade e distribuição das notas, calculadas no banco | **Implementado e testado** (`GET /api/indicadores`, agregação em SQL; dashboard integrado) |
+| RF01 | Carregar os quatro serviços por script SQL inicial | **Pronto.** `banco/schema.sql` insere Secretaria, Biblioteca, Cantina e Laboratórios |
+| RF02 | Registrar avaliação anônima com nota inteira de 1 a 5 e comentário opcional de até 280 caracteres | **Implementado e testado** (`POST /api/avaliacoes`) |
+| RF03 | Painel por serviço: média com 1 casa, quantidade e distribuição das notas, calculadas no banco | **Implementado e testado** (`GET /api/indicadores`, agregação em SQL) |
 | RF04 | Menos de 3 avaliações mostra "amostra insuficiente" no lugar da média (regra central) | **Pronto e testado** (`media: null`, `amostra_suficiente: false`) |
-| RF05 | Moderação: o gestor oculta comentário; a nota continua contando (regra central) | **Implementado e testado** (`PATCH /api/admin/avaliacoes/{id}`; tela do gestor integrada) |
+| RF05 | Moderação: o gestor oculta comentário; a nota continua contando (regra central) | **Implementado e testado** (`PATCH /api/admin/avaliacoes/{id}`) |
 
-Regras detalhadas e casos de aceite: [docs/regras-de-negocio.md](docs/regras-de-negocio.md).
+Regras detalhadas, cada uma com o teste que a prova: [docs/regras-de-negocio.md](docs/regras-de-negocio.md).
 Contrato das rotas: [docs/contrato-api.md](docs/contrato-api.md). Requisições prontas: [requests.http](requests.http).
+Modelo de ameaças: [docs/seguranca.md](docs/seguranca.md).
 
 ## 4. Arquitetura
 
@@ -57,7 +65,7 @@ flowchart LR
 
 O navegador carrega as páginas e chama a API no **mesmo endereço**. A API valida tudo no servidor, grava no
 PostgreSQL e calcula os indicadores no banco. A string de conexão vem só da variável de ambiente
-`DATABASE_URL`. A implantação na Azure (Nível A) está descrita na seção 2 e em `docs/implantacao-azure.md`.
+`DATABASE_URL`. A implantação na Azure está em [docs/implantacao-azure.md](docs/implantacao-azure.md).
 
 ### Decisão justificada: PostgreSQL relacional, com a média calculada no SQL
 
@@ -71,13 +79,20 @@ NoSQL (como o Table Storage) e somar na aplicação.
   provando isso).
 - A regra central fica numa consulta só (`ROUND(AVG(nota)::numeric, 1)` por serviço), exata e
   fácil de conferir à mão: notas 5, 4 e 4 dão 4,3.
-- A moderação é só `UPDATE ... SET oculta`; como a nota nunca é apagada, o indicador não muda.
+- A moderação é só `UPDATE ... SET oculta`; como a nota nunca é apagada, o indicador não muda. O usuário do
+  banco da aplicação nem tem permissão para alterar nota ou apagar linha.
 
 **O que se perde:**
 - Custo: o servidor PostgreSQL gerenciado cobra por hora e precisa ser parado ao fim da aula, enquanto o
   Table Storage custa quase nada.
 - Simplicidade e escala: há um servidor para configurar (firewall, TLS, `DATABASE_URL`); um NoSQL
   escalaria mais fácil, mas perderia restrições e agregações prontas.
+
+### Decisão do front-end: HTML, CSS e JavaScript puros, servidos pelo mesmo Express
+
+O front não usa framework. São poucas telas, sem regra de negócio no cliente (tudo é validado e calculado
+no servidor). Ganha-se menos dependências e menos superfície de ataque, e uma única aplicação para publicar.
+Perde-se a organização por componentes de um framework, o que seria sentido se o painel crescesse muito.
 
 ## 5. Modelo de dados
 
@@ -112,21 +127,24 @@ CREATE INDEX IF NOT EXISTS idx_avaliacoes_servico ON avaliacoes (servico_id);
 | `TIMESTAMPTZ` | `criada_em` | guarda o fuso (o App Service roda em UTC) |
 
 Anonimato: não existe nome, e-mail, matrícula nem identificador do estudante em nenhuma tabela. O limite
-contra abuso usa o IP só na memória, por 1 minuto, sem gravar em disco nem no banco.
+contra abuso usa o IP só na memória, por 1 minuto, sem gravar em disco, no banco nem no log.
 
 ## 6. Como executar
 
-**Requisitos:** Node.js 20 ou mais novo (o App Service usa o Node 22 LTS). Para rodar com dados reais, um PostgreSQL (local ou o da Azure).
-Os testes **não** precisam de banco instalado.
+**Requisitos:** Node.js 20 ou mais novo (o CI e o App Service usam o Node 22 LTS). Para rodar com dados reais,
+um PostgreSQL (local ou o da Azure). Os testes **não** precisam de banco instalado.
 
 ```bash
-npm install                          # dependências (express e pg)
+npm install                          # dependências (express e pg; ESLint e PGlite para desenvolvimento)
 cp .env.example .env                 # preencha com valores seus; o .env NUNCA vai para o Git
 npm run hash -- "senha-do-gestor"    # imprime o hash scrypt para ADMIN_SENHA_HASH
 npm run banco -- --dados             # cria as tabelas e carrega as 20 avaliações fictícias
 npm run dev                          # sobe em http://localhost:3000 lendo o .env
 npm start                            # igual, sem ler o .env (o ambiente já tem as variáveis)
-npm test                             # roda os 30 testes
+npm run lint                         # ESLint em servidor, testes e navegador
+npm test                             # roda os 56 testes
+npm run test:cobertura               # testes com cobertura mínima (90% de linhas e 80% de ramos)
+npm run auditar                      # npm audit das dependências de produção
 ```
 
 | Variável | Para quê |
@@ -136,6 +154,7 @@ npm test                             # roda os 30 testes
 | `ADMIN_USUARIO` | Usuário do gestor |
 | `ADMIN_SENHA_HASH` | Hash scrypt da senha do gestor (gerado por `npm run hash`) |
 | `SESSAO_SEGREDO` | Segredo de 32 caracteres ou mais que assina a sessão do gestor |
+| `TEST_DATABASE_URL` | Só para testes: roda a suíte contra um PostgreSQL real (o CI usa um `postgres:16`) |
 
 Sem `DATABASE_URL` a aplicação sobe, mas as rotas de dados e o `/health` respondem **503**. Sem as
 variáveis do gestor o login responde 503 e nunca libera o acesso.
@@ -148,86 +167,131 @@ As requisições da API estão em [requests.http](requests.http).
 Se a Azure não estiver disponível, o produto roda no computador (banco PostgreSQL local, mesmas
 variáveis de ambiente) com demonstração e prints. O plano completo de implantação, com todos os comandos
 `az`, está em [docs/implantacao-azure.md](docs/implantacao-azure.md): grupo `rg-cloud-g01`, App Service
-Linux F1 (`app-cloud-g01-INICIAIS`), PostgreSQL Flexible Server 16 Burstable B1ms, configuração por
-variáveis de ambiente, deploy, reinício, logs, parada do servidor e exclusão do grupo.
+Linux F1, PostgreSQL Flexible Server 16 Burstable B1ms, configuração por variáveis de ambiente, deploy,
+reinício, logs, parada do servidor e exclusão do grupo.
 
-## 7. Casos de teste
+## 7. Testes
 
 Todos executados com `npm test`, contra um **PostgreSQL de verdade em memória (PGlite)** que usa o mesmo
-`banco/schema.sql` da produção. Resultado na execução local: **30 de 30 passaram** (arquivo
-[tests/api.test.js](tests/api.test.js)). Os casos CA1, CA2 e as entradas inválidas são negativos.
+`banco/schema.sql` da produção. No CI, a mesma suíte roda também contra um **PostgreSQL 16 real**.
+Resultado medido em 18/11/2026: **56 de 56 passaram**, cobertura de **98,03% de linhas e 92,31% de ramos** em `src/`.
+Não há objetos falsos de banco: a falha de banco é testada com uma conexão real recusada.
 
-| # | Caso | Esperado | Resultado |
-|---|---|---|---|
-| 1 | RF01: serviços iniciais | Secretaria, Biblioteca, Cantina e Laboratórios | PASS |
-| 2 | **CA1 (negativo):** nota 0, 6, 3.5, -1, texto, nula ou ausente | HTTP 400 e nada gravado | PASS |
-| 3 | CA1: notas 1 a 5 | HTTP 201 com `id` | PASS |
-| 4 | **CA2 (negativo):** comentário de 281 caracteres | HTTP 400; com 280 é aceito (201) | PASS |
-| 5 | CA2: conta caracteres, não bytes (acento e emoji valem 1) | 280 aceitos; 281 emojis recusados | PASS |
-| 6 | **CA3:** notas 5, 4 e 4 | quantidade 3, média 4,3, distribuição `{4: 2, 5: 1}` | PASS |
-| 7 | **CA4:** duas avaliações | `media: null`, `amostra_suficiente: false` | PASS |
-| 8 | CA4: serviço sem avaliação | quantidade 0 e média nula | PASS |
-| 9 | **CA5:** ocultar comentário | some da lista pública; quantidade, média e distribuição iguais; reexibir devolve | PASS |
-| 10 | Serviço inexistente | HTTP 404 | PASS |
-| 11 | Avaliação inexistente na moderação | HTTP 404 | PASS |
-| 12 | Rota desconhecida da API | HTTP 404 em JSON | PASS |
-| 13 | JSON malformado | HTTP 400 sem detalhe interno | PASS |
-| 14 | Banco fora do ar | HTTP 503 em todas as rotas de dados e no `/health`, sem expor host, senha ou erro do driver | PASS |
-| 15 | `/health` | 200, `connected` e `iniciado_em` | PASS |
-| 16 | Persistência após reinício | `iniciado_em` muda e o registro continua lá | PASS |
-| 17 | Restrições do banco | `CHECK`, `VARCHAR(280)` e chave estrangeira recusam dado inválido sem passar pela API | PASS |
-| 18 | Injeção de SQL no comentário | gravada como texto, tabela intacta | PASS |
-| 19 | Moderação sem login ou com cookie falso | HTTP 401 | PASS |
-| 20 | Login com senha ou usuário errados | HTTP 401 com a mesma mensagem | PASS |
-| 21 | Login correto | cookie `HttpOnly` e `SameSite=Strict`; libera a moderação | PASS |
-| 22 | Logout | cookie apagado | PASS |
-| 23 | Moderação com `Origin` de outro site | HTTP 403 | PASS |
-| 24 | Moderação com corpo ou id inválido | HTTP 400 | PASS |
-| 25 | Lista do gestor | traz os ocultos; a pública não | PASS |
-| 26 | Cabeçalhos | `Cache-Control: no-store` e `nosniff` nas respostas da API | PASS |
-| 27 | Arquivos do servidor | `/server.js`, `/.env`, `/banco/schema.sql`, `/src/app.js` e `/.git/config` retornam 404 | PASS |
-| 28 | Sem `DATABASE_URL` | rotas de dados e `/health` em 503; front continua no ar | PASS |
-| 29 | Sem variáveis do gestor | login responde 503 | PASS |
-| 30 | Dados iniciais | 20 avaliações; Laboratórios com amostra insuficiente | PASS |
+| Arquivo | Testes | O que cobre |
+|---|---|---|
+| [tests/api.test.js](tests/api.test.js) | 30 | casos de aceite CA1 a CA5, serviços, 400/404/503, `/health`, persistência com reinício, restrições do banco, login e moderação, arquivos do servidor, dados iniciais |
+| [tests/seguranca.test.js](tests/seguranca.test.js) | 20 | sessão forjada ou vencida, força bruta, CSRF, abuso, entradas maliciosas, superfície exposta |
+| [tests/log.test.js](tests/log.test.js) | 6 | log em JSON sem IP, corpo, cookie, query nem comentário |
 
-A validação demonstrativa do painel não substitui estes testes: as entradas inválidas são enviadas
-direto à API para provar a validação no servidor. O CI (`.github/workflows/ci.yml`) roda a mesma suíte a
-cada push e pull request.
+Casos de aceite (os negativos são CA1 e CA2):
 
-## 8. Segurança e configuração
+| Caso | Esperado | Teste |
+|---|---|---|
+| **CA1 (negativo)** nota 0, 6, 3.5, texto, nula ou ausente | HTTP 400 e nada gravado | api: "CA1: nota 0, 6, 3.5, texto ou ausente retornam 400 e nada é gravado" |
+| **CA2 (negativo)** comentário de 281 caracteres | HTTP 400; com 280 é aceito | api: "CA2: comentário de 281 caracteres retorna 400; de 280 é aceito" |
+| **CA3** notas 5, 4 e 4 | quantidade 3, média 4,3, distribuição `{4: 2, 5: 1}` | api: "CA3: notas 5, 4 e 4 resultam em média 4,3 e quantidade 3" |
+| **CA4** duas avaliações | `media: null`, `amostra_suficiente: false` | api: "CA4: com duas avaliações a média é nula (amostra insuficiente)" |
+| **CA5** ocultar comentário | some da lista pública; quantidade, média e distribuição iguais; reexibir devolve | api: "CA5: comentário oculto some da lista pública, mas a nota continua na média" |
+
+A tabela completa regra por regra, com o teste de cada uma, está em
+[docs/regras-de-negocio.md](docs/regras-de-negocio.md). As entradas inválidas são enviadas direto à API para
+provar que a validação do servidor não depende do front-end. O que **ainda não** tem teste automatizado: o
+comportamento do painel em navegador real (#17) e as permissões do usuário do banco em produção, que foram
+conferidas à mão.
+
+## 8. CI/CD
+
+Cada push e cada pull request passam pelos jobs abaixo (arquivos em `.github/workflows/`).
+
+| Job | Arquivo | O que faz |
+|---|---|---|
+| Lint e testes com cobertura | `ci.yml` | ESLint e `npm run test:cobertura` (falha abaixo de 90% de linhas ou 80% de ramos), com PostgreSQL em memória |
+| Testes contra PostgreSQL 16 | `ci.yml` | a mesma suíte contra um `postgres:16` real (service container) |
+| Auditoria de dependências | `ci.yml` | `npm audit --omit=dev --audit-level=high` |
+| CodeQL | `codeql.yml` | análise estática do JavaScript em push na `main`, pull request e toda semana |
+| Gitleaks | `seguranca.yml` | procura segredos no histórico do Git (semanal, sob demanda e quando o `package-lock.json` muda) |
+| ZAP baseline | `seguranca.yml` | varredura **passiva** da aplicação publicada, semanal e sob demanda; relatório guardado como artefato |
+| Dependabot | `dependabot.yml` | atualizações semanais de npm e GitHub Actions |
+
+O que cada varredura cobre e o que **não** cobre está em [docs/relatorio-seguranca.md](docs/relatorio-seguranca.md)
+e em [docs/seguranca.md](docs/seguranca.md).
+
+**CD (deploy automático):** o workflow `deploy.yml` roda a cada push na `main`, repete lint e testes e, **se
+o segredo `AZURE_WEBAPP_PUBLISH_PROFILE` existir**, publica no App Service e confere o `/health`. **Esse
+segredo ainda não foi cadastrado**: cadastrar segredo do repositório exige permissão de administrador, que
+quem implantou não tem, e o grupo precisa decidir quem o faz (issue #18). Enquanto isso o job apenas avisa e
+termina sem publicar, e o deploy da produção atual foi feito manualmente com `az webapp deploy`. Como
+cadastrar o segredo: seção "Deploy automático" de [docs/implantacao-azure.md](docs/implantacao-azure.md).
+
+## 9. Segurança e configuração
+
+Resumo; o modelo de ameaças completo (ameaça, impacto, controle, teste e risco que continua aberto) está em
+[docs/seguranca.md](docs/seguranca.md).
 
 - String de conexão e segredos só em variáveis de ambiente; `.env` no `.gitignore`; `.env.example` só com
   nomes e valores falsos.
 - Consultas SQL sempre parametrizadas (`$1`, `$2`...); há teste de injeção.
-- Validação de nota, serviço e comentário no servidor; erros sem detalhe interno (400, 404, 429, 503).
+- Validação de nota, serviço e comentário no servidor; erros sem detalhe interno (400, 404, 413, 429, 503).
 - Moderação protegida no servidor: senha com hash `scrypt`, sessão assinada (HMAC-SHA256) em cookie
   `HttpOnly` + `SameSite=Strict`, bloqueio de `Origin` de outro site e limite de tentativas de login.
+- O usuário do banco usado pela aplicação só lê, insere avaliações e atualiza a coluna `oculta`.
 - O servidor só entrega as pastas do front-end (`css`, `js`, `icons`) e as páginas listadas; o restante do
   repositório nunca é servido.
+- Log de requisições sem IP, corpo, cookie, query string nem comentário.
 - Somente dados fictícios.
+- **Ainda não aplicado:** Content-Security-Policy, HSTS e demais cabeçalhos do ZAP (#14); `method="post"` nos
+  formulários (#22).
 
-## 9. Dificuldade superada
+## 10. Fluxo de trabalho e histórico
+
+Todo trabalho entra por **issue, branch, pull request e CI**: abre-se a issue, cria-se uma branch a partir
+da `main`, o pull request leva `Closes #N` no corpo (a palavra exata é `Closes`; "Fecha" não fecha a issue
+no GitHub), o CI precisa passar e só então há o merge. Os commits são pequenos e descrevem o que mudou.
+
+| PR | Entrega | Issue |
+|---|---|---|
+| #11 | Back-end, banco PostgreSQL, painel integrado, README e implantação na Azure | base |
+| #23 | CI: ESLint, cobertura mínima, PostgreSQL 16 real e auditoria | #12 |
+| #24 | Varreduras: CodeQL, Gitleaks, ZAP semanal e Dependabot | #19 |
+| #25 | Log de requisições sem dados pessoais | #16 |
+| #26 | Remoção do modo demonstração e do `localStorage` | #15 |
+| #27 | Testes de segurança (acharam e corrigiram um erro 500 com cookie inválido) | #13 |
+| #28 | Workflow de deploy (aguarda o segredo) | #18 (aberta) |
+| este PR | Documentação final | #20 |
+
+Ainda abertas: #14 (cabeçalhos de segurança e Chart.js local), #17 (testes ponta a ponta), #18 (segredo do
+deploy), #21 (prova de persistência e evidências) e #22 (redesenho das telas). As issues #2 a #8 são os papéis
+de cada integrante e a #10 é o checklist técnico de integração; ficam com os responsáveis.
+
+## 11. Dificuldade superada
 
 > **A preencher pelo grupo com a dificuldade real** (problema, diagnóstico, causa e solução). A ficha
 > pede um caso que realmente aconteceu na construção; não foi registrado nenhum aqui para não inventar.
 
-## 10. Limitações conhecidas e próximos passos
+## 12. Limitações conhecidas e próximos passos
 
 **Limitações:**
 - Faltam os prints da prova de persistência (E2), que dependem da palavra do dia, e o teste do professor (PROF-HHMM).
-- O modo demonstração (`localStorage`) continua existindo no front-end, mas só liga por escolha (`?modo=demo`).
-- Um único gestor, definido por variáveis de ambiente (sem cadastro de gestores).
+- O deploy automático está desligado até alguém com permissão de administrador cadastrar o segredo (#18).
+- Os cabeçalhos de segurança (CSP, HSTS) e o Chart.js local ainda não foram aplicados (#14), e os formulários
+  de login e de avaliação ainda não declaram `method="post"` (#22); o ZAP aponta esses itens como abertos.
+- Um único gestor, definido por variáveis de ambiente, sem cadastro, sem recuperação de senha e sem segundo fator.
+- A sessão do gestor não é revogada no servidor: o logout apaga o cookie do navegador, e um cookie roubado vale
+  até vencer (8 horas). Trocar `SESSAO_SEGREDO` invalida todas as sessões.
 - O limite contra abuso é em memória e por instância: reiniciar ou ter mais de uma instância zera a
   contagem. Isso protege o anonimato, mas é um controle simples.
-- Qualquer pessoa pode enviar avaliações (não há como provar que o autor é estudante sem identificá-lo).
-- Os testes automatizados usam PGlite (PostgreSQL em memória). Contra o PostgreSQL da Azure foram conferidos `/health`, as rotas de leitura, o login do gestor e as permissões do usuário do banco (inserir e ocultar permitidos; alterar nota, apagar e derrubar tabela bloqueados).
-- O gestor usa o mesmo usuário e hash em variável de ambiente; a senha não tem recuperação.
+- Qualquer pessoa pode enviar avaliações (não há como provar que o autor é estudante sem identificá-lo), e o
+  estudante pode digitar dado pessoal no comentário; só a moderação manual trata isso.
+- Os testes automatizados usam PGlite e, no CI, um PostgreSQL 16 real. Contra o PostgreSQL da Azure foram
+  conferidos à mão `/health`, as rotas de leitura, o login do gestor e as permissões do usuário do banco
+  (inserir e ocultar permitidos; alterar nota, apagar e derrubar tabela bloqueados).
+- Não há teste automatizado do painel em navegador real (#17) nem alta disponibilidade do banco (um servidor B1ms).
 
-**Próximos passos:** registrar a prova de persistência com o `G01-PALAVRA` do dia (roteiro em `evidencias/`); gravar o
-pitch de 90 segundos; preencher a seção de dificuldade superada; parar o servidor PostgreSQL ao final da aula
-e excluir o grupo de recursos `rg-cloud-g01` na data indicada pelo professor.
+**Próximos passos:** registrar a prova de persistência com o `G01-PALAVRA` do dia (roteiro em `evidencias/`); gravar
+o pitch de 90 segundos; fechar as issues #14, #17, #18 e #22; preencher a seção de dificuldade superada; parar o
+servidor PostgreSQL ao final da aula e excluir o grupo de recursos `rg-cloud-g01` na data indicada pelo professor.
 
-## 11. Equipe e responsabilidades
+## 13. Equipe e responsabilidades
 
 | Integrante | Função | Responsabilidade |
 |---|---|---|
@@ -240,24 +304,28 @@ e excluir o grupo de recursos `rg-cloud-g01` na data indicada pelo professor.
 
 Todos os integrantes devem saber explicar o fluxo completo da aplicação.
 
-## 12. Estrutura do repositório
+## 14. Estrutura do repositório
 
 ```
 .
 ├── README.md
 ├── .env.example              nomes das variáveis (valores falsos)
 ├── .gitignore                inclui .env e node_modules
-├── package.json              dependências e scripts (start, dev, test, banco, hash)
+├── package.json              dependências e scripts (start, dev, test, test:cobertura, lint, auditar, banco, hash)
+├── eslint.config.js          regras de lint (servidor, testes e navegador)
 ├── server.js                 ponto de entrada
-├── src/                      API: rotas (app.js), banco (db.js), validação e autenticação
+├── src/                      API: rotas e log (app.js), banco (db.js), validação e autenticação
 ├── banco/
 │   ├── schema.sql            tabelas, restrições e serviços iniciais
-│   └── dados-iniciais.sql    20 avaliações fictícias
+│   ├── dados-iniciais.sql    20 avaliações fictícias
+│   └── permissoes.sql        usuário da aplicação com privilégios mínimos
 ├── scripts/                  preparar o banco e gerar o hash da senha do gestor
-├── tests/                    testes automatizados (CA1 a CA5 e demais)
+├── tests/                    testes automatizados (API, segurança e log)
 ├── evidencias/               prints (E1 a E6) e scripts da prova de persistência
-├── docs/                     contrato da API, regras de negócio e implantação na Azure
+├── docs/                     contrato, regras de negócio, segurança, relatório das varreduras e implantação
 ├── requests.http             requisições prontas (REST Client)
-├── .github/workflows/ci.yml  testes a cada push
-└── index.html, dashboard.html, admin*.html, css/, js/, icons/, sw.js    front-end (PWA)
+├── .github/
+│   ├── workflows/            ci.yml, codeql.yml, seguranca.yml e deploy.yml
+│   └── dependabot.yml        atualizações semanais de dependências
+└── index.html, dashboard.html, admin*.html, offline.html, css/, js/, icons/, sw.js    front-end (PWA)
 ```
