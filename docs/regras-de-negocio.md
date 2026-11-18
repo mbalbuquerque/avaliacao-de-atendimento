@@ -39,7 +39,7 @@ Cada regra aponta o lugar onde está implementada e o teste que a prova (nome do
 | **RN03** Nota obrigatória | Nota **inteira de 1 a 5**. Valores 0, 6, 3,5, texto, lista, objeto ou ausência respondem 400 e nada é gravado. O banco também recusa (`CHECK`). | `src/validacao.js`; `banco/schema.sql` | api: "CA1: nota 0, 6, 3.5, texto ou ausente retornam 400 e nada é gravado"; "CA1: notas de 1 a 5 são aceitas com HTTP 201"; "restrições no banco recusam nota inválida mesmo sem passar pela API"; seguranca: "servico_id e nota como texto, lista ou objeto retornam 400" |
 | **RN04** Comentário opcional | Pode ficar vazio; com texto, no **máximo 280 caracteres**, contados por caractere (acento e emoji valem 1), com espaços das pontas removidos. 281 responde 400. Corpo acima de 10 KB responde 413. | `src/validacao.js`; `banco/schema.sql` (`VARCHAR(280)`); `src/app.js` (limite do corpo) | api: "CA2: comentário de 281 caracteres retorna 400; de 280 é aceito"; "CA2: conta caracteres, não bytes (acentos e emoji valem 1)"; seguranca: "corpo acima de 10 KB retorna 413" |
 | **RN05** Serviço válido | A avaliação referencia um serviço existente: a chave estrangeira garante no banco e a API responde 404 (inclusive para ids absurdos). | `banco/schema.sql`; `src/app.js` | api: "serviço inexistente retorna 404"; "restrições no banco recusam nota inválida mesmo sem passar pela API" |
-| **RN06** Persistência | As avaliações ficam no PostgreSQL e continuam disponíveis depois de reiniciar a aplicação. `localStorage` não é usado para dados. | `src/db.js`; `banco/schema.sql` | api: "persistência: depois de reiniciar a aplicação o registro continua lá"; "o script de 20 avaliações carrega e Laboratórios fica com amostra insuficiente" |
+| **RN06** Persistência | As avaliações ficam no PostgreSQL e continuam disponíveis depois de reiniciar a aplicação. `localStorage` não é usado para dados. | `src/db.js`; `banco/schema.sql` | api: "persistência: depois de reiniciar a aplicação o registro continua lá"; "banco novo: traz só os 4 serviços e nenhuma avaliação: nada é inventado" |
 | **RN07** Campos controlados pelo servidor | `id`, `oculta` e `criada_em` não podem ser escolhidos pelo cliente: campos extras no corpo são ignorados. | `src/validacao.js` (só lê `servico_id`, `nota`, `comentario`) | seguranca: "campos extras (id, oculta, criada_em) são ignorados: não dá para criar já oculto nem escolher o id"; "poluição de protótipo no corpo não altera o comportamento" |
 
 ### 3.2 Indicadores
@@ -48,7 +48,7 @@ Cada regra aponta o lugar onde está implementada e o teste que a prova (nome do
 |---|---|---|---|
 | **RN08** Quantidade e distribuição | Por serviço, conta todas as avaliações válidas (inclusive as de comentário oculto) e a quantidade de cada nota de 1 a 5. Serviço sem avaliação aparece com quantidade 0. | `src/app.js` (`GET /api/indicadores`, `COUNT ... FILTER` no SQL) | api: "CA3: notas 5, 4 e 4 resultam em média 4,3 e quantidade 3"; "CA4: serviço sem avaliação aparece com quantidade 0 e média nula" |
 | **RN09** Média | Média aritmética das notas, calculada **no banco** (`ROUND(AVG(nota)::numeric, 1)`), com **uma casa decimal**, só quando há pelo menos 3 avaliações. | `src/app.js` | api: "CA3: notas 5, 4 e 4 resultam em média 4,3 e quantidade 3" |
-| **RN10** Amostra insuficiente | Com **menos de 3** avaliações, a API devolve `media: null` e `amostra_suficiente: false` e o painel mostra "Amostra insuficiente". Quantidade e distribuição continuam visíveis. | `src/app.js`; painel (`js/dashboard.js`) | api: "CA4: com duas avaliações a média é nula (amostra insuficiente)"; "o script de 20 avaliações carrega e Laboratórios fica com amostra insuficiente" |
+| **RN10** Amostra insuficiente | Com **menos de 3** avaliações, a API devolve `media: null` e `amostra_suficiente: false` e o painel mostra "Amostra insuficiente". Quantidade e distribuição continuam visíveis. | `src/app.js`; painel (`js/dashboard.js`) | api: "CA4: com duas avaliações a média é nula (amostra insuficiente)" |
 
 Exemplo (CA03):
 
@@ -133,7 +133,7 @@ atualizar a coluna `oculta`.
 - O formulário orienta a não escrever dados pessoais no comentário; comentário impróprio é tratado pela
   moderação (RN12). Isso depende do estudante e do gestor: o sistema não detecta dado pessoal no texto.
 - O limite contra abuso e o log não gravam o IP (RN16 e RN20).
-- Dados de teste e demonstração são todos fictícios.
+- O banco entregue só tem os 4 serviços. Cada teste automatizado cria os próprios dados; nada é inventado para a demonstração.
 
 ## 8. Evidências para a entrega
 

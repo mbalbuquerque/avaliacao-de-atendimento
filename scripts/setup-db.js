@@ -1,5 +1,6 @@
-// Cria as tabelas (banco/schema.sql) e, com --dados, carrega as 20 avaliações fictícias.
-// Uso: DATABASE_URL=... node scripts/setup-db.js [--dados]
+// Cria as tabelas e os 4 serviços (banco/schema.sql). Não carrega nenhuma avaliação:
+// o painel mostra só o que os estudantes realmente enviam.
+// Uso: DATABASE_URL=... node scripts/setup-db.js
 
 const fs = require("fs");
 const path = require("path");
@@ -16,16 +17,6 @@ async function main() {
   try {
     await cliente.query(fs.readFileSync(path.join(__dirname, "..", "banco", "schema.sql"), "utf8"));
     console.log("Tabelas e serviços criados.");
-
-    if (process.argv.includes("--dados")) {
-      const { rows } = await cliente.query("SELECT COUNT(*)::int AS total FROM avaliacoes");
-      if (rows[0].total > 0) {
-        console.log(`Dados iniciais ignorados: já existem ${rows[0].total} avaliações.`);
-      } else {
-        await cliente.query(fs.readFileSync(path.join(__dirname, "..", "banco", "dados-iniciais.sql"), "utf8"));
-        console.log("20 avaliações fictícias carregadas.");
-      }
-    }
   } finally {
     await cliente.end();
   }

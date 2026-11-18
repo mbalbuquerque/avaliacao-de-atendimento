@@ -115,8 +115,8 @@ jobs:
       - name: Instalar dependências
         run: npm ci
 
-      - name: Aplicar o banco (schema.sql e dados-iniciais.sql) no PostgreSQL real
-        run: npm run banco -- --dados
+      - name: Aplicar o banco (schema.sql) no PostgreSQL real
+        run: npm run banco
 
       - name: Gerar o hash do gestor de teste e o segredo da sessão
         run: |

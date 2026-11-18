@@ -1,7 +1,7 @@
 # Evidências da entrega
 
 Pasta exigida pela ficha da atividade. Todo print deve mostrar **data e hora visíveis**
-(relógio do sistema ou do navegador). Use dados fictícios: nada de nome, e-mail ou matrícula reais.
+(relógio do sistema ou do navegador). Nunca use nome, e-mail ou matrícula reais nas evidências.
 
 `GXX-PALAVRA` na ficha vira **`G01-PALAVRA`** (Grupo 1). A palavra do dia é anunciada pelo professor
 durante a aula; nos nomes de arquivo e nos comandos abaixo, troque `PALAVRA` por ela.
