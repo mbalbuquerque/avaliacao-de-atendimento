@@ -1,0 +1,40 @@
+{
+  "palavra": "G01-ENSAIO",
+  "url": "https://app-cloud-g01-en.azurewebsites.net",
+  "print1": "mantido da execução anterior (o registro já existia)",
+  "iniciado_em_antes": "2026-11-18T18:20:11.000Z",
+  "reinicio_pedido_em": "18/11/2026, 15:26:39",
+  "reinicio_codigo": 0,
+  "iniciado_em_depois": "2026-11-18T18:27:04.756Z",
+  "iniciado_em_mudou": true,
+  "continuaNaListaDepoisDoReinicio": true,
+  "consultaDireta": [
+    {
+      "id": 43,
+      "servico": "Secretaria",
+      "nota": 5,
+      "comentario": "G01-ENSAIO",
+      "criada_em": "2026-11-18T18:02:31.711Z"
+    }
+  ],
+  "consultaFeitaEm": "18/11/2026, 15:27:10",
+  "capturas": [
+    {
+      "arquivo": "E2-print1-lista-pela-aplicacao-evidencia.png",
+      "em": "18/11/2026, 15:02:32"
+    },
+    {
+      "arquivo": "E2-print2-health-antes-evidencia.png",
+      "em": "18/11/2026, 15:26:39"
+    },
+    {
+      "arquivo": "E2-print3a-health-depois-evidencia.png",
+      "em": "18/11/2026, 15:27:07"
+    },
+    {
+      "arquivo": "E2-print3b-lista-depois-evidencia.png",
+      "em": "18/11/2026, 15:27:09"
+    }
+  ],
+  "errosDeJavaScript": []
+}
