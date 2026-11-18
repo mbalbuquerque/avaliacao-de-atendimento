@@ -1,24 +1,16 @@
-
 /*
  * AVALIE O ATENDIMENTO
  * Login administrativo
  *
- * A autenticação real depende do backend.
- * Nenhuma senha ou token é armazenado no localStorage.
+ * A autenticação é feita pelo servidor, que cria a sessão em um cookie
+ * HttpOnly. Nenhuma senha ou token é guardado no navegador.
  */
 
-const CONFIG = window.APP_CONFIG || {
-  mode: "demo",
-  apiBaseUrl: "/api",
-  requestTimeout: 10000
-};
-
-const IS_DEMO = CONFIG.mode === "demo";
+const CONFIG = window.APP_CONFIG;
 
 const form = document.getElementById("loginForm");
 const button = document.getElementById("loginButton");
 const message = document.getElementById("loginMessage");
-const notice = document.getElementById("demoNotice");
 
 function showError(text) {
   message.textContent = text;
@@ -37,7 +29,7 @@ async function login(username, password) {
 
   const timeout = setTimeout(
     () => controller.abort(),
-    CONFIG.requestTimeout || 10000
+    CONFIG.requestTimeout
   );
 
   try {
@@ -83,9 +75,8 @@ async function login(username, password) {
       );
     }
 
-    // O backend deverá criar uma sessão segura.
-    // A resposta 2xx não substitui a validação
-    // de sessão e permissão nos endpoints protegidos.
+    // O 2xx só cria a sessão: a permissão é conferida pelo servidor em cada
+    // rota protegida.
     return true;
 
   } finally {
@@ -93,17 +84,8 @@ async function login(username, password) {
   }
 }
 
-if (IS_DEMO) {
-  notice.hidden = false;
-  form.hidden = true;
-} else {
-  notice.hidden = true;
-}
-
 form.addEventListener("submit", async event => {
   event.preventDefault();
-
-  if (IS_DEMO) return;
 
   const username =
     document.getElementById("username").value.trim();

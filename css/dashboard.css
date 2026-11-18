@@ -129,7 +129,7 @@ h1 {
   background: var(--primary);
 }
 
-.demo-notice {
+.status-notice {
   background: #E7F4FC;
   color: var(--dark);
   border: 1px solid #C7E5F6;
@@ -345,7 +345,7 @@ footer {
   }
 }
 
-.demo-notice.error {
+.status-notice.error {
   background: #FDECEA;
   border-color: #F5C2BD;
   color: #8A1C12;
