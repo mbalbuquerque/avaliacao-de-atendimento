@@ -180,7 +180,7 @@ Não há objetos falsos de banco: a falha de banco é testada com uma conexão r
 
 | Arquivo | Testes | O que cobre |
 |---|---|---|
-| [tests/api.test.js](tests/api.test.js) | 30 | casos de aceite CA1 a CA5, serviços, 400/404/503, `/health`, persistência com reinício, restrições do banco, login e moderação, arquivos do servidor, dados iniciais |
+| [tests/api.test.js](tests/api.test.js) | 30 | casos de aceite CA1 a CA5, serviços, 400/404/503, `/health`, persistência com reinício, restrições do banco, login e moderação, arquivos do servidor, banco novo sem avaliações |
 | [tests/seguranca.test.js](tests/seguranca.test.js) | 20 | sessão forjada ou vencida, força bruta, CSRF, abuso, entradas maliciosas, superfície exposta |
 | [tests/log.test.js](tests/log.test.js) | 6 | log em JSON sem IP, corpo, cookie, query nem comentário |
 
