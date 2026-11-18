@@ -32,7 +32,7 @@ uma média enganosa. O gestor pode ocultar comentários impróprios sem alterar 
 | CD (deploy automático) | **Workflow pronto, mas desligado**: falta cadastrar o segredo `AZURE_WEBAPP_PUBLISH_PROFILE`, que só um administrador do repositório consegue (#18). O deploy atual foi feito manualmente |
 | Cabeçalhos de segurança (CSP restritiva, HSTS, anti-clickjacking, COOP/CORP/COEP, Permissions-Policy), limite geral de requisições e Chart.js local | **Aplicados** (#14), com testes que leem o HTML e o JavaScript do front para provar que ele funciona sob a CSP |
 | Redesenho de todas as telas (tokens, tema claro e escuro, acessibilidade, formulários com `method="post"`) e DOM sem `innerHTML` | **Concluídos** (#22, #36) |
-| Testes ponta a ponta do painel em navegador | **Pendentes** (#17) |
+| Testes ponta a ponta do painel em navegador (Playwright, Chromium) | **16 testes** (#17) contra a aplicação real, sob a CSP verdadeira, com PostgreSQL 16 real no CI: formulário, amostra insuficiente, validação, sem rede, login, moderação, sair, XSS, acessibilidade e formulários sem JavaScript |
 | Prova de persistência com a palavra do dia, teste do professor e pitch de 90 s | **Pendentes** (#21; roteiro e scripts em `evidencias/`) |
 
 Nível de implantação: a meta é o **Nível A**, que está alcançado. Se a infraestrutura bloquear por 15 minutos,
@@ -143,6 +143,7 @@ npm run dev                          # sobe em http://localhost:3000 lendo o .en
 npm start                            # igual, sem ler o .env (o ambiente já tem as variáveis)
 npm run lint                         # ESLint em servidor, testes e navegador
 npm test                             # roda os 70 testes
+npm run test:e2e                     # 16 testes no navegador (Chromium); sobe a aplicação sozinho
 npm run test:cobertura               # testes com cobertura mínima (90% de linhas e 80% de ramos)
 npm run auditar                      # npm audit das dependências de produção
 ```
@@ -195,9 +196,30 @@ Casos de aceite (os negativos são CA1 e CA2):
 
 A tabela completa regra por regra, com o teste de cada uma, está em
 [docs/regras-de-negocio.md](docs/regras-de-negocio.md). As entradas inválidas são enviadas direto à API para
-provar que a validação do servidor não depende do front-end. O que **ainda não** tem teste automatizado: o
-comportamento do painel em navegador real (#17) e as permissões do usuário do banco em produção, que foram
-conferidas à mão.
+provar que a validação do servidor não depende do front-end. O painel em navegador real tem 16 testes próprios
+(`npm run test:e2e`, seção abaixo). O que **ainda não** tem teste automatizado: as permissões do usuário do banco
+em produção, que foram conferidas à mão.
+
+### Testes ponta a ponta (navegador real)
+
+`tests/e2e/` usa o Playwright com o Chromium. O servidor de teste (`tests/e2e/servidor.js`) sobe a aplicação de
+verdade, com a CSP e todos os cabeçalhos reais, sobre um PostgreSQL: o do `DATABASE_URL` (no CI, um `postgres:16`)
+ou, na máquina do desenvolvedor, o PGlite. Cada teste começa com as tabelas recriadas e cria os dados de que
+precisa; nenhuma chamada da API é simulada (só a falta de rede, pelo navegador). Qualquer erro de JavaScript,
+erro de console ou violação da CSP reprova o teste.
+
+| Cenário | O que prova |
+|---|---|
+| Envio pela tela | nota pelo teclado, confirmação só depois do 201, avaliação nos indicadores e gravada no banco |
+| Amostra insuficiente | menos de 3 avaliações esconde a média; 5, 4 e 4 mostram 4,3 (página pública e dashboard) |
+| Validação | comentário de 281 caracteres, nota ausente e serviço ausente são recusados sem gravar |
+| Sem rede | com o navegador offline o envio não confirma sucesso e nada é gravado |
+| Login do gestor | senha errada mostra erro; senha certa abre a moderação com cookie `HttpOnly` e `SameSite=Strict` |
+| Moderação | ocultar tira da lista pública sem mudar média nem quantidade; reexibir devolve; filtro por situação |
+| Sair | encerra a sessão e a moderação volta ao login |
+| XSS | `<img onerror>`, `<script>` e `<svg onload>` aparecem como texto na página pública, no dashboard e na moderação |
+| Acessibilidade | Tab chega nos controles com foco visível, estrelas só com teclado, sem rolagem horizontal em 360x740 |
+| Sem JavaScript | os formulários enviam por POST e nenhum dado vai para a URL |
 
 ## 8. CI/CD
 
@@ -260,7 +282,7 @@ no GitHub), o CI precisa passar e só então há o merge. Os commits são pequen
 | #28 | Workflow de deploy (aguarda o segredo) | #18 (aberta) |
 | este PR | Documentação final | #20 |
 
-Ainda abertas: #17 (testes ponta a ponta), #18 (segredo do deploy) e #21 (prova de persistência e evidências). As issues #2 a #8 são os papéis
+Ainda abertas: #18 (segredo do deploy) e #21 (prova de persistência e evidências). As issues #2 a #8 são os papéis
 de cada integrante e a #10 é o checklist técnico de integração; ficam com os responsáveis.
 
 ## 11. Dificuldade superada
@@ -285,10 +307,10 @@ de cada integrante e a #10 é o checklist técnico de integração; ficam com os
 - Os testes automatizados usam PGlite e, no CI, um PostgreSQL 16 real. Contra o PostgreSQL da Azure foram
   conferidos à mão `/health`, as rotas de leitura, o login do gestor e as permissões do usuário do banco
   (inserir e ocultar permitidos; alterar nota, apagar e derrubar tabela bloqueados).
-- Não há teste automatizado do painel em navegador real (#17) nem alta disponibilidade do banco (um servidor B1ms).
+- Os testes e2e rodam só no Chromium (sem Firefox, Safari nem celular real) e sem alta disponibilidade do banco (um servidor B1ms).
 
 **Próximos passos:** registrar a prova de persistência com o `G01-PALAVRA` do dia (roteiro em `evidencias/`); gravar
-o pitch de 90 segundos; fechar as issues #17, #18 e #21; preencher a seção de dificuldade superada; parar o
+o pitch de 90 segundos; fechar as issues #18 e #21; preencher a seção de dificuldade superada; parar o
 servidor PostgreSQL ao final da aula e excluir o grupo de recursos `rg-cloud-g01` na data indicada pelo professor.
 
 ## 13. Equipe e responsabilidades
