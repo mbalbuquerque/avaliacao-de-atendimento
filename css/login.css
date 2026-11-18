@@ -1,0 +1,21 @@
+/* Login do gestor. O layout central vem de base.css. */
+
+.voltar {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--alvo);
+  margin-bottom: var(--e2);
+}
+
+.login-mensagem {
+  min-height: 1.5rem;
+  margin: 0 0 var(--e3);
+  color: var(--erro);
+  font-weight: 600;
+}
+
+.rodape-login {
+  margin-top: var(--e5);
+  font-size: var(--t-sm);
+  text-align: center;
+}
