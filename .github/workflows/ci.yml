@@ -1,8 +1,9 @@
 name: CI
 
-# Roda os testes a cada push e pull request. Os testes usam um PostgreSQL em
-# memória (PGlite) com o mesmo banco/schema.sql da produção: não precisam de
-# banco externo nem de segredos.
+# Roda a cada push e pull request:
+#  - qualidade: lint e testes com cobertura mínima (PostgreSQL em memória, PGlite)
+#  - postgres: a mesma suíte contra um PostgreSQL 16 real
+#  - dependencias: auditoria das dependências de produção
 on:
   push:
   pull_request:
@@ -11,19 +12,70 @@ permissions:
   contents: read
 
 jobs:
-  testes:
-    name: Testes (Node 20)
+  qualidade:
+    name: Lint e testes com cobertura
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Instalar dependências
         run: npm ci
 
-      - name: Rodar os testes
+      - name: Lint
+        run: npm run lint
+
+      - name: Testes com cobertura mínima
+        run: npm run test:cobertura
+
+  postgres:
+    name: Testes contra PostgreSQL 16
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: teste
+          POSTGRES_PASSWORD: senha-de-teste-ci
+          POSTGRES_DB: avaliacao_teste
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U teste -d avaliacao_teste"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Banco descartável do próprio job: cada teste recria o schema.
+      TEST_DATABASE_URL: postgres://teste:senha-de-teste-ci@localhost:5432/avaliacao_teste
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Testes (PostgreSQL real)
         run: npm test
+
+  dependencias:
+    name: Auditoria de dependências
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Procurar vulnerabilidades conhecidas (produção)
+        run: npm run auditar
