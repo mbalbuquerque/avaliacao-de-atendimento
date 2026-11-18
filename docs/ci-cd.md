@@ -37,36 +37,14 @@ Fluxo de trabalho: issue → branch → pull request com `Closes #N` → CI verd
 - Segurança: testes de ataque (`tests/seguranca.test.js`), cabeçalhos e CSP (`tests/cabecalhos.test.js`), XSS (`tests/xss.test.js`).
 - Produção verificada à mão com `curl`: `/health`, cabeçalhos de segurança, arquivos privados em 404 e login do gestor.
 
-## 4. O que falta: um segredo no GitHub (issue #18)
+## 4. Segredo do deploy (issue #18, concluída)
 
-O `deploy.yml` precisa do **perfil de publicação** do App Service (as credenciais de deploy daquele app) guardado como segredo do
-repositório com o nome **`AZURE_WEBAPP_PUBLISH_PROFILE`**. É o único passo que falta para o deploy automático funcionar.
-
-Quem faz o quê:
-
-0. **Quem tem a Azure (Everson)**, uma única vez: neste app a *credencial básica de publicação* vem **desligada** (conferido em
-   18/11/2026: `scm` e `ftp` com `allow=false`), e sem ela o perfil de publicação não funciona. Ligar só o `scm`:
-   ```bash
-   az resource update --ids "/subscriptions/<ID-DA-ASSINATURA>/resourceGroups/rg-cloud-g01/providers/Microsoft.Web/sites/app-cloud-g01-en/basicPublishingCredentialsPolicies/scm" --set properties.allow=true
-   ```
-   É uma troca consciente de segurança: as credenciais de deploy passam a existir. Para desfazer, o mesmo comando com `allow=false`.
-1. **Quem tem a Azure (Everson)** gera o perfil, que é um XML com credenciais:
-   ```bash
-   az webapp deployment list-publishing-profiles --name app-cloud-g01-en --resource-group rg-cloud-g01 --xml
-   ```
-   Passar ao administrador do repositório **no privado**, nunca em grupo, issue ou commit.
-2. **Quem administra o repositório (Marcelo)** cadastra: Settings → Secrets and variables → Actions → New repository secret →
-   nome `AZURE_WEBAPP_PUBLISH_PROFILE`, valor = o XML inteiro. Cadastrar segredo exige permissão de administrador.
-3. Dar um push na `main` (ou rodar o workflow manualmente) e conferir na aba Actions que `publicar` rodou e o `/health` passou.
-
-**Por que só o Everson:** o app e o banco estão na assinatura dele e ninguém mais tem acesso a ela. Quem revisa o CI/CD
-não precisa disso; quem cria a credencial precisa. Não é necessário recriar nada: o perfil é gerado a partir do app que já existe.
-A alternativa mais segura, sem guardar credencial no GitHub, é o login federado (OIDC), que exige criar um registro de
-aplicativo no Microsoft Entra da faculdade (o que pode não ser permitido a estudante) e cadastrar três variáveis no repositório.
-
-Quem revisa o CI/CD **não precisa de nenhuma credencial** para revisar os workflows. Só precisa delas quem vai cadastrar o segredo.
-O nome do app e a URL ficam no topo do `deploy.yml` e podem ser sobrescritos por variáveis do repositório
-(`AZURE_WEBAPP_NAME`, `APP_URL`).
+O `deploy.yml` usa o **perfil de publicação** do App Service (as credenciais de deploy daquele app), guardado como segredo do
+repositório com o nome **`AZURE_WEBAPP_PUBLISH_PROFILE`**. O segredo foi gerado com `az webapp deployment list-publishing-profiles`
+(com a credencial básica do `scm` ligada no app, decisão registrada acima) e cadastrado direto no repositório, sem passar por chat,
+issue ou commit. Prova: execução do workflow Deploy com `testar`, `segredo`, `publicar` e a conferência do `/health` com sucesso, e
+pushes seguintes na `main` publicando sozinhos. Para trocar o segredo, repita os passos da seção "Deploy automático" de
+[implantacao-azure.md](implantacao-azure.md). A revisão do CI/CD é do QA/CI-CD do grupo.
 
 ## 5. Sugestões para a revisão (todas exigem administrador do repositório)
 

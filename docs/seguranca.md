@@ -158,7 +158,7 @@ depois que uma nova execução do ZAP, contra a versão publicada, mostrar que s
 | `ADMIN_USUARIO` e `ADMIN_SENHA_HASH` (hash `scrypt`, nunca a senha) | Configurações do aplicativo; `.env` local | login do gestor |
 | `SESSAO_SEGREDO` (32 caracteres ou mais) | Configurações do aplicativo; `.env` local | assinatura da sessão |
 | Senha do administrador do PostgreSQL | só com quem administra a Azure (não é usada pela aplicação) | criar tabelas e permissões |
-| Perfil de publicação do App Service (`AZURE_WEBAPP_PUBLISH_PROFILE`) | segredo do repositório no GitHub, cadastrado por um administrador (issue #18); ainda não cadastrado | `deploy.yml` |
+| Perfil de publicação do App Service (`AZURE_WEBAPP_PUBLISH_PROFILE`) | segredo do repositório no GitHub, já cadastrado (issue #18) | `deploy.yml` |
 
 **O que nunca vai ao Git:** `.env`, senhas, a string de conexão real, o hash real do gestor, o segredo da
 sessão, o perfil de publicação e qualquer print que mostre esses valores (nos prints, ocultar o valor). O

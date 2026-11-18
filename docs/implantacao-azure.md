@@ -2,7 +2,7 @@
 
 **Situação: implantado (Nível A).** A aplicação está publicada no Azure App Service e usa
 PostgreSQL 16 gerenciado. Este documento registra a configuração adotada e serve como roteiro
-de reprodução. Os prints obrigatórios continuam pendentes em `evidencias/`.
+de reprodução. As evidências de QA e o ensaio da prova de persistência estão em `evidencias/`; a prova com a palavra do dia depende da aula.
 
 ## Antes de começar
 

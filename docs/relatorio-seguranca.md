@@ -60,7 +60,7 @@ código:** os itens do grupo A seguem para as issues #14 (cabeçalhos, CSP, Char
 
 - Varredura **ativa** do ZAP (full scan) autenticada como gestor, em ambiente de teste; hoje só há a passiva.
 - Confirmar nas próximas execuções semanais que os avisos do grupo A sumiram depois das issues #14 e #15.
-- Cadastrar o segredo `AZURE_WEBAPP_PUBLISH_PROFILE` (issue #18) para o deploy automático; exige permissão de administrador do repositório.
+- O segredo `AZURE_WEBAPP_PUBLISH_PROFILE` já está cadastrado (issue #18 fechada); manter a rotação em mente se o perfil vazar.
 
 ## Atualização de 18/11/2026: correções aplicadas no código
 
