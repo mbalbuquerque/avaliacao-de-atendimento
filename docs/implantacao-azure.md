@@ -114,8 +114,9 @@ DATABASE_URL='postgres://ADMIN_BANCO:SENHA_FORTE@SERVIDOR.postgres.database.azur
   npm run banco
 ```
 
-O `schema.sql` cria as tabelas e os quatro serviços e não carrega nenhuma avaliação: o painel mostra só o que
-os estudantes enviarem. Se a conexão recusar o certificado, tente `sslmode=no-verify` apenas
+O `schema.sql` cria as tabelas e os quatro serviços e não carrega nenhuma avaliação: sem a carga de demonstração o painel mostra só o que
+os estudantes enviarem. Para a apresentação, acrescente `-- --demonstracao` ao comando (`npm run banco -- --demonstracao`):
+carrega 20 avaliações fictícias, só uma vez. Se a conexão recusar o certificado, tente `sslmode=no-verify` apenas
 neste comando de preparação e registre o motivo (esse ajuste não foi testado neste projeto ainda).
 
 ## 7. Publicar a aplicação

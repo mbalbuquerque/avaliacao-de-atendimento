@@ -133,7 +133,9 @@ atualizar a coluna `oculta`.
 - O formulário orienta a não escrever dados pessoais no comentário; comentário impróprio é tratado pela
   moderação (RN12). Isso depende do estudante e do gestor: o sistema não detecta dado pessoal no texto.
 - O limite contra abuso e o log não gravam o IP (RN16 e RN20).
-- O banco entregue só tem os 4 serviços. Cada teste automatizado cria os próprios dados; nada é inventado para a demonstração.
+- O `schema.sql` só cria os 4 serviços. Para a apresentação existe uma carga opcional de 20 avaliações fictícias
+  (`banco/dados-demonstracao.sql`, `npm run banco -- --demonstracao`), gravada no PostgreSQL de verdade e lida pela
+  mesma API (não é mock). Cada teste automatizado cria os próprios dados.
 
 ## 8. Evidências para a entrega
 
