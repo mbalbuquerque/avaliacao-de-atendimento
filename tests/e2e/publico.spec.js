@@ -175,7 +175,9 @@ test.describe("sem JavaScript", () => {
     try {
       // Formulário de avaliação.
       await pagina.goto("/");
-      await pagina.selectOption("#service", String(SECRETARIA));
+      // Sem JavaScript os serviços (que vêm da API) não carregam: só existe a opção neutra, e o
+      // teste mostra que mesmo assim o envio nativo é POST e não coloca nada na URL.
+      await expect(pagina.locator("#service option")).toHaveCount(1);
       await pagina.locator('label[for="nota-3"]').click();
       await pagina.fill("#comment", "COMENTARIO-QUE-NAO-PODE-IR-PARA-A-URL");
       const [envio] = await Promise.all([
