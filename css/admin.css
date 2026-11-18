@@ -141,24 +141,6 @@ h1 {
   white-space: nowrap;
 }
 
-.notice {
-  padding: 17px 20px;
-  border: 1px solid #f0d59c;
-  border-radius: 12px;
-  background: #fff9eb;
-  margin-bottom: 24px;
-}
-
-.notice strong {
-  color: #795000;
-}
-
-.notice p {
-  margin: 6px 0 0;
-  line-height: 1.5;
-  font-size: 14px;
-}
-
 .metrics {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

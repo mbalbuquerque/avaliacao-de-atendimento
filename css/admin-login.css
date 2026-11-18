@@ -136,8 +136,7 @@ a {
   box-shadow: 0 0 0 3px rgba(4, 130, 194, 0.12);
 }
 
-.login-form button,
-.demo-link {
+.login-form button {
   display: block;
   width: 100%;
   border: 0;
@@ -151,8 +150,7 @@ a {
   cursor: pointer;
 }
 
-.login-form button:hover,
-.demo-link:hover {
+.login-form button:hover {
   background: var(--blue);
 }
 
@@ -169,24 +167,6 @@ a {
 
 .login-message.error {
   color: #b42318;
-}
-
-.demo-notice {
-  margin-bottom: 24px;
-  padding: 16px;
-  border: 1px solid #eed69d;
-  border-radius: 12px;
-  background: #fff9eb;
-}
-
-.demo-notice strong {
-  color: #795000;
-  font-size: 14px;
-}
-
-.demo-notice p {
-  font-size: 13px;
-  line-height: 1.6;
 }
 
 .login-footer {

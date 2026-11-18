@@ -3,32 +3,13 @@
  * AVALIE O ATENDIMENTO
  * Moderação administrativa
  *
- * Modo API: exige sessão do gestor criada pelo servidor (cookie HttpOnly).
+ * Exige sessão do gestor criada pelo servidor (cookie HttpOnly).
  * Lista em GET /api/admin/avaliacoes e oculta/reexibe com
  * PATCH /api/admin/avaliacoes/:id. A nota nunca sai dos indicadores.
  * Nenhuma senha ou token é guardado no navegador.
- *
- * Modo demo (só por escolha, ?modo=demo): dados locais, SEM autenticação.
  */
 
-const STORAGE_KEY =
-  "cloud-challenge-avaliacoes-demo-v1";
-
-const SERVICES = {
-  1: "Secretaria",
-  2: "Biblioteca",
-  3: "Cantina",
-  4: "Laboratórios"
-};
-
-const SERVICE_IDS = Object.fromEntries(
-  Object.entries(SERVICES).map(([id, name]) => [name, Number(id)])
-);
-
 const $ = id => document.getElementById(id);
-
-const IS_DEMO =
-  window.APP_CONFIG?.mode === "demo";
 
 // Lista do mais antigo para o mais novo; a tela mostra o inverso.
 let comments = [];
@@ -87,53 +68,13 @@ function handleAPIError(error, fallback) {
 }
 
 /* ---------------------------------------------------------------
-   Dados: demo (localStorage)
---------------------------------------------------------------- */
-
-function readReviews() {
-  try {
-    const parsed = JSON.parse(
-      localStorage.getItem(STORAGE_KEY) || "[]"
-    );
-
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (error) {
-    console.error("Erro ao ler avaliações:", error);
-    showMessage(
-      "Não foi possível ler os dados locais.",
-      "error"
-    );
-    return [];
-  }
-}
-
-function saveReviews(reviews) {
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify(reviews)
-  );
-}
-
-function loadLocalComments() {
-  comments = readReviews()
-    .filter(
-      item =>
-        typeof item.comment === "string" &&
-        item.comment.trim().length > 0
-    );
-
-  render();
-}
-
-/* ---------------------------------------------------------------
-   Dados: API
+   Dados do servidor
 --------------------------------------------------------------- */
 
 // Contrato do servidor -> formato interno das telas.
 function fromAPI(item) {
   return {
     id: item.id,
-    serviceId: SERVICE_IDS[item.servico],
     serviceName: item.servico,
     score: item.nota,
     comment: item.comentario,
@@ -168,10 +109,6 @@ async function loadAPIComments() {
   }
 }
 
-function loadComments() {
-  return IS_DEMO ? loadLocalComments() : loadAPIComments();
-}
-
 /* ---------------------------------------------------------------
    Apresentação
 --------------------------------------------------------------- */
@@ -194,7 +131,7 @@ function getFilteredComments() {
     .filter(item => {
       if (
         service !== "all" &&
-        String(item.serviceId) !== service
+        item.serviceName !== service
       ) {
         return false;
       }
@@ -227,8 +164,7 @@ function renderComments() {
   }
 
   container.innerHTML = filtered.map(item => {
-    const serviceName =
-      item.serviceName || SERVICES[item.serviceId] || "Serviço";
+    const serviceName = item.serviceName || "Serviço";
 
     const score = Number(item.score);
 
@@ -324,42 +260,8 @@ async function toggleViaAPI(id) {
   }
 }
 
-function toggleLocal(id) {
-  const reviews = readReviews();
-
-  const item = reviews.find(
-    review => String(review.id) === String(id)
-  );
-
-  if (!item) {
-    showMessage(
-      "Comentário não encontrado.",
-      "error"
-    );
-    return;
-  }
-
-  const nextHidden = !item.hidden;
-
-  item.hidden = nextHidden;
-
-  try {
-    saveReviews(reviews);
-    loadLocalComments();
-
-    showMessage(confirmationText(nextHidden), "ok");
-  } catch (error) {
-    console.error("Erro ao salvar moderação:", error);
-
-    showMessage(
-      "Não foi possível salvar a alteração.",
-      "error"
-    );
-  }
-}
-
 function toggleComment(id) {
-  return IS_DEMO ? toggleLocal(id) : toggleViaAPI(id);
+  return toggleViaAPI(id);
 }
 
 /* ---------------------------------------------------------------
@@ -396,7 +298,7 @@ function bindEvents() {
 
   $("refreshButton").addEventListener(
     "click",
-    loadComments
+    loadAPIComments
   );
 
   $("commentsList").addEventListener(
@@ -415,23 +317,6 @@ function bindEvents() {
 
 async function initialize() {
   bindEvents();
-
-  if (IS_DEMO) {
-    $("modeBadge").textContent = "Modo demonstração";
-    $("demoNotice").hidden = false;
-
-    window.addEventListener(
-      "storage",
-      event => {
-        if (event.key === STORAGE_KEY) {
-          loadLocalComments();
-        }
-      }
-    );
-
-    loadLocalComments();
-    return;
-  }
 
   $("modeBadge").textContent = "Verificando sessão...";
   $("refreshButton").disabled = true;
