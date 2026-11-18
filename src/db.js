@@ -3,8 +3,10 @@
 // concatenado dentro do SQL.
 
 const { Pool } = require("pg");
+const { lerConfig } = require("./config");
 
-function criarBanco(url = process.env.DATABASE_URL) {
+// Tamanho do pool e tempos vêm da configuração (BANCO_*); valor inválido falha aqui, na subida.
+function criarBanco(url = process.env.DATABASE_URL, config = lerConfig()) {
   if (!url) {
     // Sem DATABASE_URL a aplicação sobe, mas as rotas de dados respondem 503.
     return {
@@ -20,9 +22,9 @@ function criarBanco(url = process.env.DATABASE_URL) {
 
   const pool = new Pool({
     connectionString: url,
-    max: 5,
-    connectionTimeoutMillis: 5000,
-    idleTimeoutMillis: 30000
+    max: config.bancoConexoesMaximas,
+    connectionTimeoutMillis: config.bancoTimeoutConexaoMs,
+    idleTimeoutMillis: config.bancoTimeoutOciosoMs
   });
 
   // Erro em conexão ociosa não derruba o processo.
@@ -32,6 +34,7 @@ function criarBanco(url = process.env.DATABASE_URL) {
 
   return {
     configurado: true,
+    pool,
     query: (sql, params) => pool.query(sql, params),
     fechar: () => pool.end()
   };

@@ -8,9 +8,12 @@ const rateLimit = require("express-rate-limit");
 const path = require("path");
 const { validarAvaliacao } = require("./validacao");
 const auth = require("./auth");
+const { lerConfig } = require("./config");
 
 const RAIZ = path.join(__dirname, "..");
-const ID_MAXIMO = 2147483647; // limite do tipo INTEGER do PostgreSQL
+// Limites dos TIPOS do PostgreSQL (não são configuração): INTEGER e SMALLINT.
+const ID_MAXIMO = 2147483647;
+const SERVICO_ID_MAXIMO = 32767;
 
 // Limite simples em memória, por IP. Não grava nada em disco nem no banco:
 // o IP vive só alguns minutos na RAM, então o anonimato do estudante não é afetado.
@@ -30,6 +33,8 @@ function criarLimite(maximo, janelaMs) {
 }
 
 function criarApp(db, opcoes = {}) {
+  // Lida do ambiente a cada criação; as opcoes (usadas pelos testes) têm prioridade.
+  const config = { ...lerConfig(), ...(opcoes.config || {}) };
   const admin = {
     usuario: process.env.ADMIN_USUARIO,
     senhaHash: process.env.ADMIN_SENHA_HASH,
@@ -39,8 +44,8 @@ function criarApp(db, opcoes = {}) {
   const adminConfigurado = () =>
     Boolean(admin.usuario && admin.senhaHash && admin.segredo && admin.segredo.length >= 32);
 
-  const limiteAvaliacoes = criarLimite(opcoes.avaliacoesPorMinuto || 30, 60 * 1000);
-  const limiteLogin = criarLimite(opcoes.tentativasDeLogin || 10, 15 * 60 * 1000);
+  const limiteAvaliacoes = criarLimite(opcoes.avaliacoesPorMinuto || config.limiteAvaliacoesPorMinuto, 60 * 1000);
+  const limiteLogin = criarLimite(opcoes.tentativasDeLogin || config.limiteLoginTentativas, config.limiteLoginJanelaMs);
   // Muda a cada início da aplicação: serve de prova de reinício (campo iniciado_em do /health).
   const iniciadoEm = new Date().toISOString();
 
@@ -106,14 +111,14 @@ function criarApp(db, opcoes = {}) {
   // rajadas. Os limites de login e de avaliações abaixo são mais apertados e valem por cima deste.
   app.use(rateLimit({
     windowMs: 60 * 1000,
-    limit: opcoes.limiteGeralPorMinuto || 600,
+    limit: opcoes.limiteGeralPorMinuto || config.limiteGeralPorMinuto,
     standardHeaders: "draft-7",
     legacyHeaders: false,
     skip: (req) => req.path === "/health",
     message: { message: "Muitas requisições. Aguarde um minuto." }
   }));
 
-  app.use(express.json({ limit: "10kb" }));
+  app.use(express.json({ limit: config.corpoMaximoBytes }));
 
   // Falha de banco: 503 sem expor detalhe interno (host, usuário, SQL, mensagem do driver).
   function falhaDeBanco(res, erro) {
@@ -154,7 +159,7 @@ function criarApp(db, opcoes = {}) {
     if (erros.length > 0) {
       return res.status(400).json({ message: erros[0], erros });
     }
-    if (dados.servico_id > 32767) {
+    if (dados.servico_id > SERVICO_ID_MAXIMO) {
       return res.status(404).json({ message: "Serviço não encontrado." });
     }
 
@@ -215,7 +220,7 @@ function criarApp(db, opcoes = {}) {
           JOIN servicos s ON s.id = a.servico_id
          WHERE a.oculta = false AND a.comentario IS NOT NULL
          ORDER BY a.criada_em DESC, a.id DESC
-         LIMIT 100`);
+         LIMIT $1`, [config.comentariosPublicosMaximo]);
       res.json(rows);
     } catch (erro) {
       falhaDeBanco(res, erro);
@@ -259,7 +264,7 @@ function criarApp(db, opcoes = {}) {
 
     const segura = req.secure ? "; Secure" : "";
     res.set("Set-Cookie",
-      `${auth.COOKIE}=${auth.criarSessao(usuario, admin.segredo)}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${auth.VALIDADE_MS / 1000}${segura}`);
+      `${auth.COOKIE}=${auth.criarSessao(usuario, admin.segredo, Date.now(), config.sessaoMs)}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${Math.round(config.sessaoMs / 1000)}${segura}`);
     res.json({ usuario });
   });
 
@@ -277,7 +282,7 @@ function criarApp(db, opcoes = {}) {
           FROM avaliacoes a
           JOIN servicos s ON s.id = a.servico_id
          ORDER BY a.criada_em DESC, a.id DESC
-         LIMIT 500`);
+         LIMIT $1`, [config.avaliacoesGestorMaximo]);
       res.json(rows);
     } catch (erro) {
       falhaDeBanco(res, erro);
