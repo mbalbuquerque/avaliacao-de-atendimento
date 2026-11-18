@@ -55,7 +55,14 @@ function lerSessao(token, segredo, agora = Date.now()) {
 function lerCookie(cabecalho, nome) {
   for (const parte of String(cabecalho || "").split(";")) {
     const [chave, ...resto] = parte.trim().split("=");
-    if (chave === nome) return decodeURIComponent(resto.join("="));
+    if (chave === nome) {
+      // Cookie com % inválido (ex.: "%%%") faz decodeURIComponent lançar erro: trata como ausente.
+      try {
+        return decodeURIComponent(resto.join("="));
+      } catch {
+        return null;
+      }
+    }
   }
   return null;
 }
