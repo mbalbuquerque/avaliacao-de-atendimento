@@ -1,5 +1,13 @@
 
+/*
+ * Dashboard de indicadores.
+ * Modo API: lê GET /api/indicadores (média, quantidade e distribuição calculadas
+ * pelo PostgreSQL). Modo demo: calcula a partir do localStorage deste navegador.
+ */
+
 const STORAGE_KEY = "cloud-challenge-avaliacoes-demo-v1";
+
+const API_MODE = window.APP_CONFIG?.mode === "api";
 
 const SERVICES = [
   { id: 1, name: "Secretaria" },
@@ -15,9 +23,28 @@ const COLORS = [
   "#3D3D3D"
 ];
 
+const ATUALIZAR_A_CADA_MS = 30000;
+
 const charts = {};
 
 const $ = id => document.getElementById(id);
+
+function escapeHTML(value) {
+  return String(value ?? "").replace(
+    /[&<>"']/g,
+    char => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    }[char])
+  );
+}
+
+/* ---------------------------------------------------------------
+   Origem dos dados
+--------------------------------------------------------------- */
 
 function loadReviews() {
   try {
@@ -38,7 +65,8 @@ function loadReviews() {
   }
 }
 
-function calculateStatistics(reviews) {
+// Demo: estatísticas calculadas no navegador.
+function calculateLocalStatistics(reviews) {
   return SERVICES.map(service => {
     const items = reviews.filter(
       review => review.serviceId === service.id
@@ -64,15 +92,78 @@ function calculateStatistics(reviews) {
   });
 }
 
+// API: converte o contrato (indicadores por serviço) para o formato das telas.
+function statisticsFromAPI(data) {
+  if (!Array.isArray(data)) {
+    throw new Error("Formato de indicadores inválido.");
+  }
+
+  return SERVICES.map(service => {
+    const item = data.find(
+      entry => Number(entry.servico_id) === service.id
+    );
+
+    const count = Number(item?.quantidade ?? 0);
+
+    const sufficient =
+      count >= 3 && item?.amostra_suficiente === true;
+
+    const average = sufficient && item.media !== null
+      ? Number(item.media)
+      : null;
+
+    return {
+      ...service,
+      count,
+      average: Number.isFinite(average) ? average : null,
+      distribution: [1, 2, 3, 4, 5].map(
+        note => Number(item?.distribuicao?.[String(note)] ?? 0)
+      )
+    };
+  });
+}
+
+async function loadStatistics() {
+  if (!API_MODE) {
+    return calculateLocalStatistics(loadReviews());
+  }
+
+  if (typeof AvalieAPI === "undefined") {
+    throw new Error(
+      "A camada de integração com a API não foi carregada."
+    );
+  }
+
+  return statisticsFromAPI(await AvalieAPI.buscarIndicadores());
+}
+
+/* ---------------------------------------------------------------
+   Apresentação
+--------------------------------------------------------------- */
+
 function formatAverage(value) {
   return value === null
     ? "Amostra insuficiente"
     : value.toFixed(1).replace(".", ",");
 }
 
-function renderMetrics(stats, reviews) {
-  $("totalReviews").textContent = reviews.length;
-  $("totalServices").textContent = SERVICES.length;
+function setNotice(text, error = false) {
+  const element = $("dataSourceNotice");
+
+  if (!element) return;
+
+  element.textContent = text;
+  element.classList.toggle("error", error);
+}
+
+function renderMetrics(stats) {
+  const total = stats.reduce(
+    (sum, service) => sum + service.count,
+    0
+  );
+
+  $("totalReviews").textContent = total;
+  $("totalServices").textContent = stats.length;
 
   $("validServices").textContent = stats.filter(
     service => service.count >= 3
@@ -80,15 +171,17 @@ function renderMetrics(stats, reviews) {
 
   // A média geral só é apresentada quando existem
   // pelo menos 3 avaliações no conjunto.
-  const generalAverage = reviews.length >= 3
-    ? reviews.reduce((sum, item) => sum + item.score, 0) /
-      reviews.length
-    : null;
+  const points = stats.reduce(
+    (sum, service) => sum + service.distribution.reduce(
+      (acc, count, index) => acc + count * (index + 1),
+      0
+    ),
+    0
+  );
 
-  $("generalAverage").textContent =
-    generalAverage === null
-      ? "—"
-      : formatAverage(generalAverage);
+  $("generalAverage").textContent = total >= 3
+    ? formatAverage(points / total)
+    : "—";
 }
 
 function createOrUpdateChart(key, canvasId, config) {
@@ -201,7 +294,7 @@ function renderCharts(stats) {
 function renderTable(stats) {
   $("sectorTable").innerHTML = stats.map(service => `
     <tr>
-      <td><strong>${service.name}</strong></td>
+      <td><strong>${escapeHTML(service.name)}</strong></td>
       <td>${service.count}</td>
       <td>${formatAverage(service.average)}</td>
       <td>
@@ -219,32 +312,54 @@ function renderTable(stats) {
   `).join("");
 }
 
+let lastStats = null;
+
 function renderDashboard() {
-  const reviews = loadReviews();
+  if (!lastStats) return;
+
   const selected = $("serviceFilter").value;
 
-  const filtered = selected === "all"
-    ? reviews
-    : reviews.filter(item => item.serviceId === Number(selected));
-
-  const stats = calculateStatistics(filtered);
-
   const visibleStats = selected === "all"
-    ? stats
-    : stats.filter(item => item.id === Number(selected));
+    ? lastStats
+    : lastStats.filter(item => item.id === Number(selected));
 
-  renderMetrics(visibleStats, filtered);
+  renderMetrics(visibleStats);
   renderCharts(visibleStats);
   renderTable(visibleStats);
 }
 
-$("serviceFilter").addEventListener("change", renderDashboard);
-$("refreshButton").addEventListener("click", renderDashboard);
+async function refreshDashboard() {
+  try {
+    lastStats = await loadStatistics();
 
-window.addEventListener("storage", event => {
-  if (event.key === STORAGE_KEY) {
+    setNotice(
+      API_MODE
+        ? "Dados do servidor (PostgreSQL), atualizados a cada 30 segundos."
+        : "Dados locais de demonstração, guardados só neste navegador."
+    );
+
     renderDashboard();
-  }
-});
+  } catch (error) {
+    console.error("Erro ao carregar indicadores:", error);
 
-renderDashboard();
+    setNotice(
+      `Não foi possível carregar os indicadores do servidor. ${error.message || ""}`.trim(),
+      true
+    );
+  }
+}
+
+$("serviceFilter").addEventListener("change", renderDashboard);
+$("refreshButton").addEventListener("click", refreshDashboard);
+
+if (!API_MODE) {
+  window.addEventListener("storage", event => {
+    if (event.key === STORAGE_KEY) {
+      refreshDashboard();
+    }
+  });
+} else {
+  setInterval(refreshDashboard, ATUALIZAR_A_CADA_MS);
+}
+
+refreshDashboard();
