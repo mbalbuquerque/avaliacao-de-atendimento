@@ -23,7 +23,8 @@ uma média enganosa. O gestor pode ocultar comentários impróprios sem alterar 
 |---|---|
 | API, regras de negócio e validação no servidor | **Implementadas e testadas** |
 | Testes automatizados | **70 testes passando** (30 de API e regras, 20 de segurança, 6 de log, 9 de cabeçalhos e CSP, 5 de XSS), com **98,24% de linhas e 93,13% de ramos** cobertos em `src/` (medido em 18/11/2026; o CI exige no mínimo 90% e 80%) |
-| Banco PostgreSQL: tabelas, restrições e os 4 serviços iniciais (nenhuma avaliação inventada) | **Implementado** (`banco/schema.sql`, `banco/permissoes.sql`) |
+| Banco PostgreSQL: tabelas, restrições e os 4 serviços iniciais (o `schema.sql` não carrega nenhuma avaliação) | **Implementado** (`banco/schema.sql`, `banco/permissoes.sql`) |
+| Dados fictícios de demonstração (20 avaliações) para o painel não aparecer vazio na apresentação | **Implementado, opcional** (`banco/dados-demonstracao.sql`, `npm run banco -- --demonstracao`): são linhas reais no PostgreSQL, não mock |
 | `GET /health` com teste real do banco | **Implementado e testado** |
 | Moderação do gestor com autenticação no servidor | **Implementada e testada** (cookie `HttpOnly`, `SameSite=Strict`, `Secure`) |
 | Painel (formulário, dashboard, tela do gestor) integrado à API | **Concluído**; o modo demonstração e todo o `localStorage` de avaliações foram **removidos** (#15) |
@@ -139,6 +140,7 @@ npm install                          # dependências (express e pg; ESLint e PGl
 cp .env.example .env                 # preencha com valores seus; o .env NUNCA vai para o Git
 npm run hash -- "senha-do-gestor"    # imprime o hash scrypt para ADMIN_SENHA_HASH
 npm run banco                        # cria as tabelas e os 4 serviços (sem nenhuma avaliação)
+npm run banco -- --demonstracao      # idem + 20 avaliações FICTÍCIAS de demonstração (opcional, idempotente)
 npm run dev                          # sobe em http://localhost:3000 lendo o .env
 npm start                            # igual, sem ler o .env (o ambiente já tem as variáveis)
 npm run lint                         # ESLint em servidor, testes e navegador
@@ -262,6 +264,10 @@ Resumo; o modelo de ameaças completo (ameaça, impacto, controle, teste e risco
   repositório nunca é servido.
 - Log de requisições sem IP, corpo, cookie, query string nem comentário.
 - Nenhum dado pessoal: o banco não tem nome, e-mail, matrícula, IP nem agente do estudante.
+- **Dado fictício não é mock.** Mock é código ou serviço de mentira no lugar do real, e o projeto não tem nenhum:
+  os testes rodam contra PostgreSQL de verdade e a API é a mesma em teste e em produção. Os dados de demonstração
+  são linhas fictícias gravadas nesse mesmo banco, lidas pela mesma API, e só entram se alguém pedir
+  (`--demonstracao`). Os testes automatizados criam os próprios dados, sem depender dessa carga.
 - Content-Security-Policy sem `unsafe-inline` nem CDN, HSTS, anti-clickjacking, COOP/CORP/COEP e Permissions-Policy (#14).
 - Limite geral de requisições por IP, em memória (#14), além dos limites mais apertados de login e de avaliações.
 - Front sem `innerHTML`: o texto vindo da API entra sempre como nó de texto (#36); formulários com `method="post"`.
@@ -341,6 +347,7 @@ Todos os integrantes devem saber explicar o fluxo completo da aplicação.
 ├── src/                      API: rotas e log (app.js), banco (db.js), validação e autenticação
 ├── banco/
 │   ├── schema.sql            tabelas, restrições e serviços iniciais
+│   ├── dados-demonstracao.sql  20 avaliações fictícias (carga opcional)
 │   └── permissoes.sql        usuário da aplicação com privilégios mínimos
 ├── scripts/                  preparar o banco e gerar o hash da senha do gestor
 ├── tests/                    testes automatizados (API, segurança e log)
