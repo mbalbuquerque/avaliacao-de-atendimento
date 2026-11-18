@@ -1,164 +1,142 @@
 # Regras de negócio — Avalie o Atendimento
 
-**Projeto:** Cloud Challenge — Grupo 1 | SENAC 2026.2  
-**Desafio:** 13 — Avalie o Atendimento  
-**Status:** regras definidas; validação integral com backend e PostgreSQL pendente.
+**Projeto:** Cloud Challenge — Grupo 1 | SENAC 2026.2
+**Desafio:** 13 — Avalie o Atendimento
+**Status:** regras implementadas na API e no banco, cada uma com o teste automatizado que a comprova.
 
-Este documento detalha os requisitos já previstos no README acadêmico e as decisões de interface tomadas durante o desenvolvimento do frontend. Regras adicionais de segurança e contrato de API são **propostas de implementação** até confirmação pelo backend.
+Os testes citados estão em [`tests/api.test.js`](../tests/api.test.js), [`tests/seguranca.test.js`](../tests/seguranca.test.js)
+e [`tests/log.test.js`](../tests/log.test.js) e rodam com `npm test`. O formato das rotas está em
+[`contrato-api.md`](contrato-api.md) e o modelo de ameaças em [`seguranca.md`](seguranca.md).
 
 ## 1. Atores
 
-- **Estudante:** registra avaliação sem login ou cadastro e consulta indicadores e comentários públicos.
-- **Gestor:** consulta avaliações para moderação e oculta/reexibe comentários, mediante autenticação no backend de produção.
+- **Estudante:** registra avaliação sem login nem cadastro e consulta indicadores e comentários públicos.
+- **Gestor:** autentica-se no servidor, consulta todas as avaliações (inclusive as ocultas) e oculta ou
+  reexibe comentários.
 
 ## 2. Serviços
 
-| ID usado no frontend demonstrativo | Serviço |
+| ID | Serviço |
 |---|---|
 | 1 | Secretaria |
 | 2 | Biblioteca |
 | 3 | Cantina |
 | 4 | Laboratórios |
 
-**RN01 — Catálogo de serviços:** somente serviços cadastrados podem receber avaliações. Os quatro serviços iniciais devem ser inseridos no banco por script SQL. IDs reais devem ser confirmados pela API, não presumidos como fixos.
+Os IDs são os gerados pelo banco na ordem de inserção do `banco/schema.sql`. O front-end sempre os lê de
+`GET /api/servicos`; não deve presumi-los fixos.
 
-## 3. Registro de avaliações
+## 3. Regras
 
-**RN02 — Participação sem cadastro:** o estudante não precisa de login nem fornecer nome, e-mail ou matrícula para avaliar. O sistema não deve solicitar esses dados no formulário público.
+Cada regra aponta o lugar onde está implementada e o teste que a prova (nome do teste entre aspas).
 
-**RN03 — Nota obrigatória:** cada avaliação deve possuir uma nota inteira de **1 a 5**. Valores como 0, 6, 3,5, texto ou ausência de nota devem ser rejeitados. A API deve responder HTTP 400 para as entradas inválidas previstas em CA01.
+### 3.1 Registro de avaliações
 
-**RN04 — Comentário opcional:** o comentário pode ficar vazio e, quando preenchido, deve ter **no máximo 280 caracteres**. Um texto com 281 caracteres deve ser rejeitado pela API com HTTP 400, conforme CA02. A contagem deve ser validada também no servidor.
+| Regra | Descrição | Onde está | Teste que comprova |
+|---|---|---|---|
+| **RN01** Catálogo de serviços | Só serviços cadastrados recebem avaliação. Os quatro serviços entram por script SQL. Serviço inexistente responde 404. | `banco/schema.sql` (`INSERT` e chave estrangeira); `src/app.js` (`POST /api/avaliacoes`) | api: "RF01: os quatro serviços vêm do script SQL inicial"; "serviço inexistente retorna 404" |
+| **RN02** Sem cadastro | O estudante não informa nome, e-mail nem matrícula. Nenhuma tabela nem log guarda identificador dele. | `banco/schema.sql` (sem coluna pessoal); formulário público | seguranca: "o banco não tem coluna que identifique o estudante (IP, agente, sessão)"; log: "comentário, cookie, query string e IP nunca aparecem no log" |
+| **RN03** Nota obrigatória | Nota **inteira de 1 a 5**. Valores 0, 6, 3,5, texto, lista, objeto ou ausência respondem 400 e nada é gravado. O banco também recusa (`CHECK`). | `src/validacao.js`; `banco/schema.sql` | api: "CA1: nota 0, 6, 3.5, texto ou ausente retornam 400 e nada é gravado"; "CA1: notas de 1 a 5 são aceitas com HTTP 201"; "restrições no banco recusam nota inválida mesmo sem passar pela API"; seguranca: "servico_id e nota como texto, lista ou objeto retornam 400" |
+| **RN04** Comentário opcional | Pode ficar vazio; com texto, no **máximo 280 caracteres**, contados por caractere (acento e emoji valem 1), com espaços das pontas removidos. 281 responde 400. Corpo acima de 10 KB responde 413. | `src/validacao.js`; `banco/schema.sql` (`VARCHAR(280)`); `src/app.js` (limite do corpo) | api: "CA2: comentário de 281 caracteres retorna 400; de 280 é aceito"; "CA2: conta caracteres, não bytes (acentos e emoji valem 1)"; seguranca: "corpo acima de 10 KB retorna 413" |
+| **RN05** Serviço válido | A avaliação referencia um serviço existente: a chave estrangeira garante no banco e a API responde 404 (inclusive para ids absurdos). | `banco/schema.sql`; `src/app.js` | api: "serviço inexistente retorna 404"; "restrições no banco recusam nota inválida mesmo sem passar pela API" |
+| **RN06** Persistência | As avaliações ficam no PostgreSQL e continuam disponíveis depois de reiniciar a aplicação. `localStorage` não é usado para dados. | `src/db.js`; `banco/schema.sql` | api: "persistência: depois de reiniciar a aplicação o registro continua lá"; "o script de 20 avaliações carrega e Laboratórios fica com amostra insuficiente" |
+| **RN07** Campos controlados pelo servidor | `id`, `oculta` e `criada_em` não podem ser escolhidos pelo cliente: campos extras no corpo são ignorados. | `src/validacao.js` (só lê `servico_id`, `nota`, `comentario`) | seguranca: "campos extras (id, oculta, criada_em) são ignorados: não dá para criar já oculto nem escolher o id"; "poluição de protótipo no corpo não altera o comportamento" |
 
-**RN05 — Serviço válido:** toda avaliação deve referenciar um serviço existente. O backend deve validar `servico_id` e a integridade referencial no banco. O código HTTP para serviço inexistente deve ser acordado no contrato da API.
+### 3.2 Indicadores
 
-**RN06 — Persistência:** na versão final, avaliações devem ser gravadas em PostgreSQL e permanecer disponíveis após reinício da aplicação. O armazenamento no `localStorage` é exclusivo do modo demonstração e não comprova esse requisito.
+| Regra | Descrição | Onde está | Teste que comprova |
+|---|---|---|---|
+| **RN08** Quantidade e distribuição | Por serviço, conta todas as avaliações válidas (inclusive as de comentário oculto) e a quantidade de cada nota de 1 a 5. Serviço sem avaliação aparece com quantidade 0. | `src/app.js` (`GET /api/indicadores`, `COUNT ... FILTER` no SQL) | api: "CA3: notas 5, 4 e 4 resultam em média 4,3 e quantidade 3"; "CA4: serviço sem avaliação aparece com quantidade 0 e média nula" |
+| **RN09** Média | Média aritmética das notas, calculada **no banco** (`ROUND(AVG(nota)::numeric, 1)`), com **uma casa decimal**, só quando há pelo menos 3 avaliações. | `src/app.js` | api: "CA3: notas 5, 4 e 4 resultam em média 4,3 e quantidade 3" |
+| **RN10** Amostra insuficiente | Com **menos de 3** avaliações, a API devolve `media: null` e `amostra_suficiente: false` e o painel mostra "Amostra insuficiente". Quantidade e distribuição continuam visíveis. | `src/app.js`; painel (`js/dashboard.js`) | api: "CA4: com duas avaliações a média é nula (amostra insuficiente)"; "o script de 20 avaliações carrega e Laboratórios fica com amostra insuficiente" |
 
-## 4. Indicadores e dashboard
-
-**RN07 — Quantidade por serviço:** contar todas as avaliações válidas registradas para cada serviço, inclusive aquelas com comentários ocultados.
-
-**RN08 — Distribuição de notas:** apresentar a quantidade de avaliações para cada nota de 1, 2, 3, 4 e 5 por serviço.
-
-**RN09 — Média por serviço:** calcular a média aritmética das notas do serviço e exibi-la com **uma casa decimal**, somente quando houver pelo menos três avaliações.
-
-Fórmula:
+Exemplo (CA03):
 
 ```text
-media = soma_das_notas / quantidade_de_avaliacoes
+notas = [5, 4, 4]      quantidade = 3
+media = 13 / 3 = 4,333...      media_exibida = 4,3
 ```
 
-Exemplo CA03:
+### 3.3 Comentários e moderação
 
-```text
-notas = [5, 4, 4]
-quantidade = 3
-media = 13 / 3 = 4,333...
-media_exibida = 4,3
-```
+| Regra | Descrição | Onde está | Teste que comprova |
+|---|---|---|---|
+| **RN11** Comentários públicos | `GET /api/comentarios` devolve só comentários não ocultos e não vazios, do mais novo ao mais antigo, no máximo 100. Avaliação sem comentário conta nos indicadores, mas não aparece na lista. | `src/app.js` | api: "CA5: comentário oculto some da lista pública, mas a nota continua na média"; "lista do gestor traz comentários ocultos; a pública não" |
+| **RN12** Moderação sem alterar a nota | O gestor oculta ou reexibe um comentário (`PATCH /api/admin/avaliacoes/{id}` com `oculta` booleano). Ocultar **não apaga a avaliação** e não muda nota, quantidade, distribuição nem média. Não existe rota para apagar ou editar nota ou texto. | `src/app.js`; `banco/permissoes.sql` (o usuário da aplicação só pode atualizar a coluna `oculta`) | api: "CA5: ..."; "moderação valida o corpo: oculta precisa ser booleano"; seguranca: "identificadores absurdos na moderação não causam erro de banco"; "não existem rotas destrutivas: DELETE, PUT e PATCH nas avaliações retornam 404" |
 
-**RN10 — Amostra insuficiente:** quando a quantidade de avaliações de um serviço for **menor que 3**, apresentar **“Amostra insuficiente”** e não exibir a média. A quantidade e a distribuição podem continuar visíveis.
+### 3.4 Acesso do gestor
 
-## 5. Comentários e moderação
+| Regra | Descrição | Onde está | Teste que comprova |
+|---|---|---|---|
+| **RN13** Autenticação no servidor | Só o gestor autenticado lê dados de moderação ou altera `oculta`. Senha conferida com hash `scrypt`; sessão assinada com HMAC-SHA256, cookie `HttpOnly`, `SameSite=Strict`, `Secure` em HTTPS, validade de 8 horas. Sem sessão, 401. Usuário e senha errados dão a mesma resposta. | `src/auth.js`; `src/app.js` | api: "moderação sem login retorna 401; com cookie falso também"; "login: senha errada e usuário errado retornam 401 com a mesma mensagem"; "login correto cria cookie HttpOnly/SameSite e libera a moderação"; "logout encerra a sessão no navegador"; seguranca: os 5 testes do grupo "sessão" |
+| **RN14** Origem das escritas | Login, logout e moderação com cabeçalho `Origin` de outro site respondem 403 (CSRF). | `src/app.js` (`mesmaOrigem`) | api: "moderação com Origin de outro site é bloqueada (403)"; seguranca: "login e logout de outra origem (CSRF) são bloqueados" |
+| **RN15** Sem configuração, sem acesso | Sem `ADMIN_USUARIO`, `ADMIN_SENHA_HASH` ou `SESSAO_SEGREDO` (de 32 caracteres ou mais), o login responde 503 e nunca libera. | `src/app.js` | api: "sem variáveis do gestor o login responde 503 (nunca libera)" |
 
-**RN11 — Comentários públicos:** comentários não ocultos podem aparecer na interface pública. Avaliações sem comentário continuam contando nos indicadores, mas não precisam ocupar espaço na lista de comentários.
+### 3.5 Limites, falhas e privacidade
 
-**RN12 — Moderação sem alterar a nota:** um gestor autorizado pode ocultar ou reexibir um comentário impróprio. Ocultar o comentário impede sua exibição pública, **mas não apaga a avaliação nem modifica nota, quantidade, distribuição ou média**. A coluna planejada `oculta` controla esse estado.
+| Regra | Descrição | Onde está | Teste que comprova |
+|---|---|---|---|
+| **RN16** Limite de avaliações | No máximo 30 avaliações por minuto por IP; excedente responde 429 e não é gravado. O IP vive só na memória, por 1 minuto. | `src/app.js` (`criarLimite`) | seguranca: "limite de avaliações por minuto responde 429 e não grava a excedente" |
+| **RN17** Limite de tentativas de login | No máximo 10 tentativas de login por IP em 15 minutos; depois disso 429, mesmo com a senha certa, e nenhuma sessão é criada. | `src/app.js` | seguranca: "força bruta: depois do limite de tentativas o IP recebe 429, mesmo com a senha certa" |
+| **RN18** Falha de banco | Banco indisponível: rotas de dados e `/health` respondem 503 sem expor host, usuário, SQL nem mensagem do driver. `/health` testa a conexão de verdade e traz `iniciado_em`. | `src/app.js`; `src/db.js` | api: "banco fora do ar: rotas de dados e /health retornam 503 sem expor detalhes"; "/health confirma a conexão com o banco"; "sem DATABASE_URL as rotas de dados respondem 503 e o front continua no ar" |
+| **RN19** Erros sem detalhe interno | Nenhuma resposta de erro traz pilha, SQL, driver ou caminho de arquivo; JSON inválido responde 400. | `src/app.js` (manipulador de erros) | api: "JSON malformado retorna 400 sem detalhe interno"; seguranca: "nenhuma resposta de erro expõe pilha, SQL, driver ou caminho"; "cookie vazio, sem ponto ou com lixo é recusado sem derrubar o servidor" |
+| **RN20** Anonimato nos logs | Cada requisição gera uma linha JSON com método, rota (pelo padrão, ex.: `/api/admin/avaliacoes/:id`), status e tempo. **Nunca** registra IP, corpo, cookie, query string nem comentário. `/health` fica fora. | `src/app.js` (middleware de log) | log: os 6 testes de "log de requisições" |
+| **RN21** Superfície mínima | O servidor entrega só `css/`, `js/`, `icons/` e as páginas listadas. Código, `banco/`, `.env`, `.git` e `node_modules` respondem 404; a API não é guardada em cache (`no-store`) e responde com `nosniff`. | `src/app.js` | api: "a API não serve arquivos do servidor (código, banco, .env)"; "respostas da API não são guardadas em cache e trazem nosniff"; seguranca: "travessia de diretório e arquivos ocultos não são servidos"; "páginas e API trazem nosniff e Referrer-Policy; a API não é guardada em cache" |
 
-**Regra de acesso proposta:** em produção, somente gestores autenticados e autorizados podem consultar dados de moderação ou alterar `oculta`. A interface demonstrativa `admin.html` não implementa autenticação real.
-
-## 6. Requisitos funcionais de referência
+## 4. Requisitos funcionais de referência
 
 | Requisito | Regras relacionadas |
 |---|---|
 | RF01 — Carregar serviços por script SQL | RN01 |
-| RF02 — Registrar avaliação anônima com nota de 1 a 5 | RN02–RN06 |
-| RF03 — Exibir média, quantidade e distribuição | RN07–RN09 |
+| RF02 — Registrar avaliação anônima com nota de 1 a 5 | RN02–RN07, RN16 |
+| RF03 — Exibir média, quantidade e distribuição | RN08–RN09 |
 | RF04 — Exibir amostra insuficiente | RN10 |
-| RF05 — Ocultar comentário sem alterar média | RN11–RN12 |
+| RF05 — Ocultar comentário sem alterar média | RN11–RN15 |
 
-## 7. Casos de aceite obrigatórios
+## 5. Casos de aceite obrigatórios
 
-| Caso | Preparação / entrada | Resultado esperado |
-|---|---|---|
-| CA01 | Enviar notas 0, 6 e 3,5 diretamente à API | HTTP 400 para cada valor |
-| CA02 | Enviar comentário com 281 caracteres diretamente à API | HTTP 400 |
-| CA03 | Registrar notas 5, 4 e 4 para um serviço isolado | Quantidade 3 e média exibida 4,3 |
-| CA04 | Registrar apenas duas avaliações para um serviço isolado | Exibir “Amostra insuficiente”; não exibir média |
-| CA05 | Ocultar comentário de avaliação existente | Comentário some da consulta pública; nota segue nos indicadores |
+| Caso | Entrada | Resultado esperado | Teste automatizado |
+|---|---|---|---|
+| CA01 | Notas 0, 6 e 3,5 enviadas direto à API | HTTP 400 para cada valor | api: "CA1: nota 0, 6, 3.5, texto ou ausente retornam 400 e nada é gravado" |
+| CA02 | Comentário com 281 caracteres direto à API | HTTP 400 | api: "CA2: comentário de 281 caracteres retorna 400; de 280 é aceito" |
+| CA03 | Notas 5, 4 e 4 para um serviço isolado | Quantidade 3 e média 4,3 | api: "CA3: notas 5, 4 e 4 resultam em média 4,3 e quantidade 3" |
+| CA04 | Apenas duas avaliações para um serviço isolado | "Amostra insuficiente"; média não exibida (`null`) | api: "CA4: com duas avaliações a média é nula (amostra insuficiente)" |
+| CA05 | Ocultar o comentário de uma avaliação existente | Some da consulta pública; a nota segue nos indicadores; reexibir devolve | api: "CA5: comentário oculto some da lista pública, mas a nota continua na média" |
 
-Para CA03 e CA04, usar dados isolados de teste, evitando que registros anteriores alterem os resultados. Para CA05, conferir indicadores antes e depois da ocultação e testar também a reexibição.
+Cada teste usa um banco novo, então os dados de um caso não alteram o outro.
 
-## 8. Modelo de dados planejado
+## 6. Modelo de dados
+
+Arquivo completo: [`banco/schema.sql`](../banco/schema.sql).
 
 ### `servicos`
 
-- `id` — chave primária.
-- `nome` — nome do serviço.
+- `id` — chave primária (`SMALLSERIAL`).
+- `nome` — único e obrigatório (`VARCHAR(60)`).
 
 ### `avaliacoes`
 
-- `id` — chave primária.
-- `servico_id` — chave estrangeira para `servicos`.
-- `nota` — inteiro de 1 a 5.
-- `comentario` — texto opcional de até 280 caracteres.
-- `oculta` — booleano, padrão falso.
-- `criada_em` — data e hora de criação.
+- `id` — chave primária (`SERIAL`).
+- `servico_id` — chave estrangeira para `servicos`, obrigatória.
+- `nota` — inteiro de 1 a 5, obrigatório (`CHECK`).
+- `comentario` — texto opcional de até 280 caracteres (`VARCHAR(280)`).
+- `oculta` — booleano, padrão `false`.
+- `criada_em` — `TIMESTAMPTZ`, padrão `now()`.
 
-Restrições devem ser aplicadas no banco e verificadas também na API. O schema definitivo pertence à equipe de dados.
+As restrições valem no banco e são verificadas também na API. O usuário que a aplicação usa em produção
+(`app_avaliacao`, [`banco/permissoes.sql`](../banco/permissoes.sql)) só pode ler, inserir avaliações e
+atualizar a coluna `oculta`.
 
-## 9. Integração planejada
+## 7. Privacidade
 
-Payload de avaliação proposto:
+- Nenhuma tabela guarda nome, e-mail, matrícula, IP ou agente do estudante.
+- O formulário orienta a não escrever dados pessoais no comentário; comentário impróprio é tratado pela
+  moderação (RN12). Isso depende do estudante e do gestor: o sistema não detecta dado pessoal no texto.
+- O limite contra abuso e o log não gravam o IP (RN16 e RN20).
+- Dados de teste e demonstração são todos fictícios.
 
-```json
-{
-  "servico_id": 1,
-  "nota": 5,
-  "comentario": "Bom atendimento."
-}
-```
+## 8. Evidências para a entrega
 
-Endpoints propostos:
-
-| Método | Caminho | Uso |
-|---|---|---|
-| GET | `/api/servicos` | Catálogo |
-| POST | `/api/avaliacoes` | Cadastro |
-| GET | `/api/indicadores` | Indicadores |
-| GET | `/api/comentarios` | Comentários públicos |
-| POST | `/api/admin/login` | Autenticação do gestor |
-| GET | `/api/admin/me` | Sessão/permissão |
-| GET | `/api/admin/avaliacoes` | Moderação protegida |
-| PATCH | `/api/admin/avaliacoes/{id}` | Alterar visibilidade |
-| POST | `/api/admin/logout` | Encerrar sessão |
-| GET | `/health` | Saúde da aplicação e banco |
-
-**Atenção:** esses caminhos são uma proposta de contrato, não comprovação de endpoints já implementados. O backend deve confirmar formatos de resposta, autenticação, CSRF, erros HTTP e política de CORS quando aplicável.
-
-## 10. Modo demonstração versus produção
-
-| Aspecto | Demonstração | Produção prevista |
-|---|---|---|
-| Armazenamento | `localStorage` do navegador | PostgreSQL |
-| Compartilhamento de dados | Mesmo navegador e origem | Centralizado via API |
-| Moderação | Simulação local | Backend com autorização |
-| Login de gestor | Tela demonstrativa | Sessão autenticada |
-| Validação | Interface e lógica local | API e restrições do banco |
-| Persistência após reinício do servidor | Não comprova | Obrigatória |
-
-**Não considerar o frontend demonstrativo como comprovação de segurança, autenticação ou persistência em nuvem.**
-
-## 11. Privacidade e segurança — decisões a validar
-
-- Não solicitar identificação do estudante.
-- Orientar a não inserir dados pessoais nos comentários.
-- Evitar divulgação de credenciais e dados sensíveis no repositório.
-- Validar entradas no backend, inclusive quando o frontend já valida.
-- Proteger endpoints administrativos por sessão e autorização.
-- Definir políticas de logs, retenção e tratamento de dados técnicos antes do deploy.
-- Utilizar HTTPS e medidas adequadas de segurança de sessão.
-
-## 12. Evidências para a entrega
-
-Para cada caso CA01–CA05, registrar: identificador, pré-condições, dados de entrada, endpoint/tela, resultado esperado, resultado obtido, status PASS/FAIL e evidência (captura, resposta HTTP ou log). Incluir também prova de persistência após reinício, resposta do `/health` e evidência de implantação conforme o nível Azure alcançado.
+Para cada caso CA01–CA05 a evidência é o teste da tabela da seção 5 (resultado no CI de cada pull request).
+Os registros que dependem de pessoas e do dia (prova de persistência com a palavra do dia, teste do
+professor, prints com data e hora) seguem o roteiro de [`evidencias/`](../evidencias/README.md).
