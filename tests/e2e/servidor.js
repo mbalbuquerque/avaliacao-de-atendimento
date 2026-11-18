@@ -2,7 +2,7 @@
 // sobre um PostgreSQL. Com DATABASE_URL usa um PostgreSQL real (o CI sobe um postgres:16);
 // sem ela, usa PGlite (PostgreSQL em memória) para rodar na máquina do desenvolvedor.
 //
-// Além da aplicação (porta 3100), abre um endereço de CONTROLE só para o teste (porta 3101,
+// Além da aplicação (porta E2E_PORTA, padrão 3100), abre um endereço de CONTROLE só para o teste (padrão 3101,
 // somente 127.0.0.1) que recria o banco e insere dados de apoio. Ele não faz parte do produto.
 
 const crypto = require("crypto");
@@ -82,7 +82,7 @@ async function main() {
     limiteGeralPorMinuto: 100000,
     log: () => {}
   });
-  await new Promise((ok) => app.listen(3100, "127.0.0.1", ok));
+  await new Promise((ok) => app.listen(AMBIENTE.porta, "127.0.0.1", ok));
 
   const controle = http.createServer(async (req, res) => {
     const responder = (status, corpo) => {
@@ -98,6 +98,12 @@ async function main() {
         await semear(db, await lerCorpo(req));
         return responder(200, { ok: true });
       }
+      if (req.method === "POST" && req.url === "/servico") {
+        // Serviço extra no banco (os testes provam que o front mostra o que o banco tem, sem mudar HTML).
+        const { nome } = await lerCorpo(req);
+        const { rows } = await db.query("INSERT INTO servicos (nome) VALUES ($1) RETURNING id, nome", [nome]);
+        return responder(200, rows[0]);
+      }
       if (req.method === "GET" && req.url === "/avaliacoes") {
         const { rows } = await db.query(
           "SELECT id, servico_id, nota, comentario, oculta FROM avaliacoes ORDER BY id");
@@ -109,7 +115,7 @@ async function main() {
       return responder(500, { erro: erro.message });
     }
   });
-  await new Promise((ok) => controle.listen(3101, "127.0.0.1", ok));
+  await new Promise((ok) => controle.listen(AMBIENTE.portaControle, "127.0.0.1", ok));
 
   console.log(`Servidor e2e pronto em ${AMBIENTE.base} (banco: ${db.tipo})`);
 
