@@ -1,7 +1,7 @@
 
 // Troque o número da versão a cada mudança do front-end: o service worker novo
 // apaga o cache antigo e o navegador deixa de servir arquivos velhos.
-const CACHE_NAME = "avalie-atendimento-v3";
+const CACHE_NAME = "avalie-atendimento-v4";
 
 const APP_SHELL = [
   "./",
@@ -14,6 +14,7 @@ const APP_SHELL = [
   "./css/dashboard.css",
   "./js/config.js",
   "./js/api.js",
+  "./js/dom.js",
   "./js/script.js",
   "./js/dashboard.js",
   "./js/pwa.js",

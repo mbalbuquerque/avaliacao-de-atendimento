@@ -1,3 +1,4 @@
+/* global el, preencher */
 /*
  * AVALIE O ATENDIMENTO
  * Cloud Challenge — Grupo 1
@@ -19,19 +20,6 @@ let sending = false;
 /* ==================================================
    UTILITÁRIOS
 ================================================== */
-
-function safe(value) {
-  return String(value ?? "").replace(
-    /[&<>"']/g,
-    char => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;"
-    }[char])
-  );
-}
 
 function showMessage(text, type = "erro") {
   const element = $("formMessage");
@@ -158,7 +146,7 @@ function renderIndicators() {
 
   if (!$("services")) return;
 
-  $("services").innerHTML = indicators.map(service => {
+  preencher($("services"), indicators.map(service => {
     const count = service.quantidade;
 
     const average = service.amostra_suficiente
@@ -169,34 +157,29 @@ function renderIndicators() {
       note => ({ note, value: service.distribuicao[String(note)] || 0 })
     );
 
-    return `
-      <li class="servico">
-        <div class="servico-topo">
-          <div>
-            <strong>${safe(service.nome)}</strong>
-            <small>${count} ${count === 1 ? "avaliação" : "avaliações"}</small>
-          </div>
-
-          ${
-            average === null
-              ? '<span class="selo selo--aviso">Amostra insuficiente</span>'
-              : `<span class="media">${average} <small aria-hidden="true">★</small><span class="sr-only">de 5</span></span>`
-          }
-        </div>
-
-        <ul class="distribuicao" aria-label="Distribuição das notas de ${safe(service.nome)}">
-          ${counts.map(({ note, value }) => `
-            <li>
-              <span>${note}★</span>
-              <progress class="barra" max="100" value="${count ? Math.round(value / count * 100) : 0}"
-                aria-label="${note} estrelas: ${value} de ${count}"></progress>
-              <span class="quantidade">${value}</span>
-            </li>
-          `).join("")}
-        </ul>
-      </li>
-    `;
-  }).join("");
+    return el("li", { class: "servico" },
+      el("div", { class: "servico-topo" },
+        el("div", null,
+          el("strong", null, service.nome),
+          el("small", null, `${count} ${count === 1 ? "avaliação" : "avaliações"}`)),
+        average === null
+          ? el("span", { class: "selo selo--aviso" }, "Amostra insuficiente")
+          : el("span", { class: "media" },
+            `${average} `,
+            el("small", { "aria-hidden": "true" }, "★"),
+            el("span", { class: "sr-only" }, "de 5"))),
+      el("ul",
+        { class: "distribuicao", "aria-label": `Distribuição das notas de ${service.nome}` },
+        counts.map(({ note, value }) => el("li", null,
+          el("span", null, `${note}★`),
+          el("progress", {
+            class: "barra",
+            max: 100,
+            value: count ? Math.round(value / count * 100) : 0,
+            "aria-label": `${note} estrelas: ${value} de ${count}`
+          }),
+          el("span", { class: "quantidade" }, Number(value))))));
+  }));
 }
 
 /* ==================================================
@@ -206,19 +189,19 @@ function renderIndicators() {
 function renderComments() {
   if (!$("comments")) return;
 
-  $("comments").innerHTML = publicComments.length
-    ? publicComments.map(item => `
-        <li class="comentario">
-          <header>
-            <strong>${safe(item.servico)}</strong>
-            <span class="nota-estrelas" role="img"
-              aria-label="Nota ${safe(item.nota)} de 5">${starText(item.nota)}</span>
-          </header>
+  preencher($("comments"), publicComments.length
+    ? publicComments.map(item => {
+      const nota = Math.max(0, Math.min(5, Number(item.nota) || 0));
 
-          <p>${safe(item.comentario)}</p>
-        </li>
-      `).join("")
-    : '<li class="vazio">Nenhum comentário público ainda. Seja a primeira pessoa a comentar.</li>';
+      return el("li", { class: "comentario" },
+        el("header", null,
+          el("strong", null, item.servico),
+          el("span",
+            { class: "nota-estrelas", role: "img", "aria-label": `Nota ${nota} de 5` },
+            starText(nota))),
+        el("p", null, item.comentario));
+    })
+    : el("li", { class: "vazio" }, "Nenhum comentário público ainda. Seja a primeira pessoa a comentar."));
 }
 
 /* ==================================================
@@ -251,19 +234,19 @@ function showLoadError() {
   const box = $("services");
 
   if (box) {
-    box.innerHTML = `
-      <li class="vazio">
-        Não foi possível carregar os indicadores agora.
-        <br>
-        <button type="button" class="btn btn-secundaria" id="retryLoad">Tentar de novo</button>
-      </li>
-    `;
+    const retry = el("button",
+      { type: "button", class: "btn btn-secundaria", id: "retryLoad" },
+      "Tentar de novo");
+    retry.addEventListener("click", initialize);
 
-    $("retryLoad").addEventListener("click", initialize);
+    preencher(box, el("li", { class: "vazio" },
+      "Não foi possível carregar os indicadores agora.",
+      el("br"),
+      retry));
   }
 
   if ($("comments")) {
-    $("comments").innerHTML = "";
+    $("comments").replaceChildren();
   }
 }
 
@@ -362,8 +345,11 @@ async function initialize() {
   updateRatingHint();
 
   if ($("services")) {
-    $("services").innerHTML =
-      '<li class="esqueleto" aria-hidden="true"></li><li class="esqueleto" aria-hidden="true"></li>';
+    preencher(
+      $("services"),
+      el("li", { class: "esqueleto", "aria-hidden": "true" }),
+      el("li", { class: "esqueleto", "aria-hidden": "true" })
+    );
   }
 
   try {
