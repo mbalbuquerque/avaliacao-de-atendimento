@@ -93,7 +93,7 @@ estudante e o acesso do gestor à moderação.
     além do `SameSite=Strict` do cookie.
   - O servidor entrega só `css/`, `js/`, `icons/` e as páginas listadas; `server.js`, `src/`, `banco/`, `.env`,
     `.git` e `node_modules` respondem 404, e travessia de diretório não funciona.
-  - `.env` está no `.gitignore`; o `.env.example` só tem nomes e valores falsos; o Gitleaks procura segredos no
+  - `.env` está no `.gitignore`; o `.env.example` só tem nomes e valores de exemplo; o Gitleaks procura segredos no
     histórico (`.github/workflows/seguranca.yml`).
   - A API responde com `Cache-Control: no-store`, `X-Content-Type-Options: nosniff` e `Referrer-Policy:
     no-referrer`, sem `X-Powered-By`.
@@ -162,7 +162,7 @@ depois que uma nova execução do ZAP, contra a versão publicada, mostrar que s
 
 **O que nunca vai ao Git:** `.env`, senhas, a string de conexão real, o hash real do gestor, o segredo da
 sessão, o perfil de publicação e qualquer print que mostre esses valores (nos prints, ocultar o valor). O
-repositório só tem o `.env.example` com valores falsos. Se um segredo foi para o Git, **apagar o arquivo não
+repositório só tem o `.env.example` com valores de exemplo. Se um segredo foi para o Git, **apagar o arquivo não
 basta, porque ele continua no histórico**: trocar o segredo na hora.
 
 **Como girar (valores sempre como `<...>`, nunca escritos aqui):**

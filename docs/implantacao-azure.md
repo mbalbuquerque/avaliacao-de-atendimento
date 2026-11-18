@@ -105,17 +105,17 @@ az webapp config appsettings set --name $APP --resource-group $GRUPO --settings 
 Se a senha do banco tiver caractere especial (`@`, `:`, `/`, `#`), codifique-o na URL.
 Tire um print das variáveis com o valor oculto (evidência E5).
 
-## 6. Criar as tabelas e carregar os dados no banco da Azure
+## 6. Criar as tabelas e os serviços no banco da Azure
 
 Da raiz do repositório, apontando para o banco da Azure (a variável vale só nesse comando):
 
 ```bash
 DATABASE_URL='postgres://ADMIN_BANCO:SENHA_FORTE@SERVIDOR.postgres.database.azure.com:5432/avalie?sslmode=require' \
-  npm run banco -- --dados
+  npm run banco
 ```
 
-O `schema.sql` cria as tabelas e os quatro serviços; `--dados` carrega as 20 avaliações fictícias
-(só se o banco estiver vazio). Se a conexão recusar o certificado, tente `sslmode=no-verify` apenas
+O `schema.sql` cria as tabelas e os quatro serviços e não carrega nenhuma avaliação: o painel mostra só o que
+os estudantes enviarem. Se a conexão recusar o certificado, tente `sslmode=no-verify` apenas
 neste comando de preparação e registre o motivo (esse ajuste não foi testado neste projeto ainda).
 
 ## 7. Publicar a aplicação

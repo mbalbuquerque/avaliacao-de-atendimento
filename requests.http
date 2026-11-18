@@ -1,6 +1,6 @@
 ### Avalie o Atendimento: coleção de requisições (extensão REST Client do VS Code)
 ### Escolha o ambiente trocando a variável @base abaixo.
-### Dados fictícios: nenhuma requisição leva nome, e-mail ou matrícula.
+### Nenhuma requisição leva nome, e-mail ou matrícula.
 
 @local = http://localhost:3000
 @azure = https://SUA-URL.azurewebsites.net

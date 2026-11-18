@@ -23,7 +23,7 @@ uma média enganosa. O gestor pode ocultar comentários impróprios sem alterar 
 |---|---|
 | API, regras de negócio e validação no servidor | **Implementadas e testadas** |
 | Testes automatizados | **70 testes passando** (30 de API e regras, 20 de segurança, 6 de log, 9 de cabeçalhos e CSP, 5 de XSS), com **98,24% de linhas e 93,13% de ramos** cobertos em `src/` (medido em 18/11/2026; o CI exige no mínimo 90% e 80%) |
-| Banco PostgreSQL: tabelas, restrições, serviços iniciais e 20 avaliações fictícias | **Implementado** (`banco/schema.sql`, `banco/dados-iniciais.sql`, `banco/permissoes.sql`) |
+| Banco PostgreSQL: tabelas, restrições e os 4 serviços iniciais (nenhuma avaliação inventada) | **Implementado** (`banco/schema.sql`, `banco/permissoes.sql`) |
 | `GET /health` com teste real do banco | **Implementado e testado** |
 | Moderação do gestor com autenticação no servidor | **Implementada e testada** (cookie `HttpOnly`, `SameSite=Strict`, `Secure`) |
 | Painel (formulário, dashboard, tela do gestor) integrado à API | **Concluído**; o modo demonstração e todo o `localStorage` de avaliações foram **removidos** (#15) |
@@ -138,7 +138,7 @@ um PostgreSQL (local ou o da Azure). Os testes **não** precisam de banco instal
 npm install                          # dependências (express e pg; ESLint e PGlite para desenvolvimento)
 cp .env.example .env                 # preencha com valores seus; o .env NUNCA vai para o Git
 npm run hash -- "senha-do-gestor"    # imprime o hash scrypt para ADMIN_SENHA_HASH
-npm run banco -- --dados             # cria as tabelas e carrega as 20 avaliações fictícias
+npm run banco                        # cria as tabelas e os 4 serviços (sem nenhuma avaliação)
 npm run dev                          # sobe em http://localhost:3000 lendo o .env
 npm start                            # igual, sem ler o .env (o ambiente já tem as variáveis)
 npm run lint                         # ESLint em servidor, testes e navegador
@@ -180,7 +180,7 @@ Não há objetos falsos de banco: a falha de banco é testada com uma conexão r
 
 | Arquivo | Testes | O que cobre |
 |---|---|---|
-| [tests/api.test.js](tests/api.test.js) | 30 | casos de aceite CA1 a CA5, serviços, 400/404/503, `/health`, persistência com reinício, restrições do banco, login e moderação, arquivos do servidor, dados iniciais |
+| [tests/api.test.js](tests/api.test.js) | 30 | casos de aceite CA1 a CA5, serviços, 400/404/503, `/health`, persistência com reinício, restrições do banco, login e moderação, arquivos do servidor, banco novo sem avaliações |
 | [tests/seguranca.test.js](tests/seguranca.test.js) | 20 | sessão forjada ou vencida, força bruta, CSRF, abuso, entradas maliciosas, superfície exposta |
 | [tests/log.test.js](tests/log.test.js) | 6 | log em JSON sem IP, corpo, cookie, query nem comentário |
 
@@ -252,7 +252,7 @@ Resumo; o modelo de ameaças completo (ameaça, impacto, controle, teste e risco
 [docs/seguranca.md](docs/seguranca.md).
 
 - String de conexão e segredos só em variáveis de ambiente; `.env` no `.gitignore`; `.env.example` só com
-  nomes e valores falsos.
+  nomes e valores de exemplo.
 - Consultas SQL sempre parametrizadas (`$1`, `$2`...); há teste de injeção.
 - Validação de nota, serviço e comentário no servidor; erros sem detalhe interno (400, 404, 413, 429, 503).
 - Moderação protegida no servidor: senha com hash `scrypt`, sessão assinada (HMAC-SHA256) em cookie
@@ -261,7 +261,7 @@ Resumo; o modelo de ameaças completo (ameaça, impacto, controle, teste e risco
 - O servidor só entrega as pastas do front-end (`css`, `js`, `icons`) e as páginas listadas; o restante do
   repositório nunca é servido.
 - Log de requisições sem IP, corpo, cookie, query string nem comentário.
-- Somente dados fictícios.
+- Nenhum dado pessoal: o banco não tem nome, e-mail, matrícula, IP nem agente do estudante.
 - Content-Security-Policy sem `unsafe-inline` nem CDN, HSTS, anti-clickjacking, COOP/CORP/COEP e Permissions-Policy (#14).
 - Limite geral de requisições por IP, em memória (#14), além dos limites mais apertados de login e de avaliações.
 - Front sem `innerHTML`: o texto vindo da API entra sempre como nó de texto (#36); formulários com `method="post"`.
@@ -333,7 +333,7 @@ Todos os integrantes devem saber explicar o fluxo completo da aplicação.
 ```
 .
 ├── README.md
-├── .env.example              nomes das variáveis (valores falsos)
+├── .env.example              nomes das variáveis (valores de exemplo)
 ├── .gitignore                inclui .env e node_modules
 ├── package.json              dependências e scripts (start, dev, test, test:cobertura, lint, auditar, banco, hash)
 ├── eslint.config.js          regras de lint (servidor, testes e navegador)
@@ -341,7 +341,6 @@ Todos os integrantes devem saber explicar o fluxo completo da aplicação.
 ├── src/                      API: rotas e log (app.js), banco (db.js), validação e autenticação
 ├── banco/
 │   ├── schema.sql            tabelas, restrições e serviços iniciais
-│   ├── dados-iniciais.sql    20 avaliações fictícias
 │   └── permissoes.sql        usuário da aplicação com privilégios mínimos
 ├── scripts/                  preparar o banco e gerar o hash da senha do gestor
 ├── tests/                    testes automatizados (API, segurança e log)

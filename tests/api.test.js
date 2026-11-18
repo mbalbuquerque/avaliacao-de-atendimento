@@ -309,15 +309,21 @@ describe("sem configuração", () => {
   });
 });
 
-describe("dados iniciais", () => {
-  test("o script de 20 avaliações carrega e Laboratórios fica com amostra insuficiente", async () => {
-    const db = await criarBancoDeTeste({ comDados: true });
+describe("banco novo", () => {
+  test("traz só os 4 serviços e nenhuma avaliação: nada é inventado", async () => {
+    const db = await criarBancoDeTeste();
     const api = await iniciar(db);
     try {
-      const ind = (await api.get("/api/indicadores")).json;
-      assert.equal(ind.reduce((soma, s) => soma + s.quantidade, 0), 20);
-      assert.equal(ind.find((s) => s.nome === "Laboratórios").media, null);
-      assert.notEqual(ind.find((s) => s.nome === "Secretaria").media, null);
+      const indicadores = (await api.get("/api/indicadores")).json;
+      assert.deepEqual(indicadores.map((s) => s.nome), ["Secretaria", "Biblioteca", "Cantina", "Laboratórios"]);
+      for (const servico of indicadores) {
+        assert.equal(servico.quantidade, 0, servico.nome);
+        assert.equal(servico.media, null, servico.nome);
+        assert.equal(servico.amostra_suficiente, false, servico.nome);
+      }
+      assert.deepEqual((await api.get("/api/comentarios")).json, []);
+      const { rows } = await db.query("SELECT COUNT(*)::int AS n FROM avaliacoes");
+      assert.equal(rows[0].n, 0);
     } finally {
       await api.parar();
       await db.fechar();
