@@ -1,3 +1,4 @@
+/* global el, preencher */
 
 /*
  * Dashboard de indicadores.
@@ -26,19 +27,6 @@ const ATUALIZAR_A_CADA_MS = 30000;
 const charts = {};
 
 const $ = id => document.getElementById(id);
-
-function escapeHTML(value) {
-  return String(value ?? "").replace(
-    /[&<>"']/g,
-    char => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;"
-    }[char])
-  );
-}
 
 /* ---------------------------------------------------------------
    Dados do servidor
@@ -239,24 +227,14 @@ function renderCharts(stats) {
 }
 
 function renderTable(stats) {
-  $("sectorTable").innerHTML = stats.map(service => `
-    <tr>
-      <th scope="row">${escapeHTML(service.name)}</th>
-      <td>${service.count}</td>
-      <td>${formatAverage(service.average)}</td>
-      <td>
-        <span class="selo ${
-          service.count < 3 ? "selo--aviso" : "selo--ok"
-        }">
-          ${
-            service.count < 3
-              ? "Amostra insuficiente"
-              : "Amostra válida"
-          }
-        </span>
-      </td>
-    </tr>
-  `).join("");
+  preencher($("sectorTable"), stats.map(service => el("tr", null,
+    el("th", { scope: "row" }, service.name),
+    el("td", null, Number(service.count)),
+    el("td", null, formatAverage(service.average)),
+    el("td", null,
+      el("span",
+        { class: `selo ${service.count < 3 ? "selo--aviso" : "selo--ok"}` },
+        service.count < 3 ? "Amostra insuficiente" : "Amostra válida")))));
 
   // Texto equivalente ao gráfico de média, para quem não enxerga o canvas.
   $("averageSummary").textContent = stats.map(
