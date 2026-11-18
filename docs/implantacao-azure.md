@@ -190,3 +190,24 @@ az group delete --name $GRUPO --yes --no-wait
 | `no pg_hba.conf entry ... no encryption` | Conexão sem TLS | Usar `sslmode=require` |
 | Erro de política ao criar recurso | Região não permitida pela assinatura | Recriar na região listada na mensagem |
 | Datas com 3 horas de diferença | O App Service usa UTC | O banco guarda `TIMESTAMPTZ`; converter na exibição |
+
+## Deploy automático (GitHub Actions)
+
+O workflow `.github/workflows/deploy.yml` roda a cada push na `main`: lint, testes com cobertura e,
+**se o segredo existir**, publica no App Service e confere o `/health`. Sem o segredo ele apenas avisa
+e termina sem erro.
+
+Para ligar a publicação automática (quem for administrador do repositório):
+
+1. Gerar o perfil de publicação do app (contém credenciais: não imprimir em canal público, não colocar no Git):
+   ```bash
+   az webapp deployment list-publishing-profiles --name app-cloud-g01-en --resource-group rg-cloud-g01 --xml
+   ```
+2. No GitHub: Settings > Secrets and variables > Actions > New repository secret, nome
+   `AZURE_WEBAPP_PUBLISH_PROFILE`, valor = o XML inteiro.
+3. Se o `az` reclamar de autenticação básica, habilitar a publicação por credenciais no App Service
+   (Configuração > Configurações gerais > "SCM Basic Auth Publishing Credentials").
+4. Fazer um push na `main` e acompanhar a aba Actions.
+
+O perfil só vale para este app e pode ser revogado em "Redefinir perfil de publicação" no portal.
+

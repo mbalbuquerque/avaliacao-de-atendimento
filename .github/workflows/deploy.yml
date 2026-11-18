@@ -1,0 +1,82 @@
+name: Deploy na Azure
+
+# A cada push na main: testa e, se o segredo AZURE_WEBAPP_PUBLISH_PROFILE existir,
+# publica no App Service e confere o /health. Sem o segredo, o job só avisa e não falha
+# (como cadastrar o segredo: docs/implantacao-azure.md, seção "Deploy automático").
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-azure
+  cancel-in-progress: false
+
+env:
+  APP_NOME: app-cloud-g01-en
+  APP_URL: https://app-cloud-g01-en.azurewebsites.net
+
+jobs:
+  testar:
+    name: Testar antes de publicar
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test:cobertura
+
+  publicar:
+    name: Publicar no App Service
+    needs: testar
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verificar o segredo de publicação
+        id: segredo
+        env:
+          PERFIL: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        run: |
+          if [ -z "$PERFIL" ]; then
+            echo "disponivel=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Segredo AZURE_WEBAPP_PUBLISH_PROFILE não cadastrado: deploy automático ignorado."
+          else
+            echo "disponivel=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Empacotar o código (sem testes nem node_modules)
+        if: steps.segredo.outputs.disponivel == 'true'
+        run: git archive --format=zip -o app.zip HEAD
+
+      - name: Publicar
+        if: steps.segredo.outputs.disponivel == 'true'
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.APP_NOME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: app.zip
+
+      - name: Conferir o /health publicado
+        if: steps.segredo.outputs.disponivel == 'true'
+        run: |
+          for tentativa in $(seq 1 20); do
+            resposta=$(curl -s -m 20 "$APP_URL/health" || true)
+            if echo "$resposta" | grep -q '"database":"connected"'; then
+              echo "Saudável: $resposta"
+              exit 0
+            fi
+            echo "Tentativa $tentativa: $resposta"
+            sleep 15
+          done
+          echo "O /health não confirmou o banco conectado depois do deploy."
+          exit 1

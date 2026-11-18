@@ -14,12 +14,28 @@ const ADMIN = {
   segredo: "segredo-de-teste-com-mais-de-trinta-e-dois-caracteres"
 };
 
+// Por padrão usa um PostgreSQL de verdade em memória (PGlite). Com TEST_DATABASE_URL
+// aponta para um PostgreSQL real (o CI sobe um postgres:16): a mesma suíte roda nos dois.
 async function criarBancoDeTeste({ comDados = false } = {}) {
-  const pg = new PGlite();
-  await pg.exec(fs.readFileSync(path.join(__dirname, "..", "banco", "schema.sql"), "utf8"));
-  if (comDados) {
-    await pg.exec(fs.readFileSync(path.join(__dirname, "..", "banco", "dados-iniciais.sql"), "utf8"));
+  const schema = fs.readFileSync(path.join(__dirname, "..", "banco", "schema.sql"), "utf8");
+  const dados = fs.readFileSync(path.join(__dirname, "..", "banco", "dados-iniciais.sql"), "utf8");
+
+  if (process.env.TEST_DATABASE_URL) {
+    const { Pool } = require("pg");
+    const pool = new Pool({ connectionString: process.env.TEST_DATABASE_URL, max: 2 });
+    await pool.query("DROP SCHEMA public CASCADE; CREATE SCHEMA public;");
+    await pool.query(schema);
+    if (comDados) await pool.query(dados);
+    return {
+      configurado: true,
+      query: (sql, params) => pool.query(sql, params),
+      fechar: () => pool.end()
+    };
   }
+
+  const pg = new PGlite();
+  await pg.exec(schema);
+  if (comDados) await pg.exec(dados);
   return {
     configurado: true,
     query: (sql, params) => pg.query(sql, params),

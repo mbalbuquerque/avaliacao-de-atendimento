@@ -52,6 +52,26 @@ function criarApp(db, opcoes = {}) {
     if (req.path.startsWith("/api") || req.path === "/health") res.set("Cache-Control", "no-store");
     next();
   });
+
+  // Log de cada requisição em JSON: método, rota, status e tempo. NUNCA registra IP, corpo,
+  // cookie, query string nem comentário: o anonimato do estudante vale também nos logs.
+  // O /health fica de fora para não encher o log com a sonda do Azure.
+  const registrar = opcoes.log || ((linha) => console.log(linha));
+  app.use((req, res, next) => {
+    if (req.path === "/health") return next();
+    const inicio = process.hrtime.bigint();
+    res.on("finish", () => {
+      const rota = req.route ? `${req.baseUrl}${req.route.path}` : req.path.slice(0, 80);
+      registrar(JSON.stringify({
+        nivel: "info",
+        metodo: req.method,
+        rota,
+        status: res.statusCode,
+        ms: Math.round(Number(process.hrtime.bigint() - inicio) / 1e6)
+      }));
+    });
+    next();
+  });
   app.use(express.json({ limit: "10kb" }));
 
   // Falha de banco: 503 sem expor detalhe interno (host, usuário, SQL, mensagem do driver).
