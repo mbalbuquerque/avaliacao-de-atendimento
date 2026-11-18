@@ -15,7 +15,8 @@
     "hash": "node scripts/gerar-hash.js",
     "test:cobertura": "node --test --test-concurrency=1 --experimental-test-coverage --test-coverage-include=\"src/**/*.js\" --test-coverage-lines=90 --test-coverage-branches=80",
     "lint": "eslint .",
-    "auditar": "npm audit --omit=dev --audit-level=high"
+    "auditar": "npm audit --omit=dev --audit-level=high",
+    "test:e2e": "playwright test --config=tests/e2e/playwright.config.js"
   },
   "dependencies": {
     "chart.js": "4.6.1",
@@ -27,6 +28,7 @@
   "devDependencies": {
     "@electric-sql/pglite": "^0.2.17",
     "@eslint/js": "^9.39.5",
+    "@playwright/test": "1.65.1",
     "eslint": "^9.39.5",
     "globals": "^17.14.0"
   }
