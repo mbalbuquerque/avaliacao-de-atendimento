@@ -2,7 +2,7 @@ name: Segurança
 
 # Gitleaks: procura segredos no código e em todo o histórico do Git.
 # ZAP baseline: varredura PASSIVA da aplicação publicada (observa respostas, não ataca).
-# Roda sob demanda, toda segunda-feira e quando o package-lock.json ou este arquivo mudam na main.
+# Roda sob demanda, toda segunda-feira e quando o package-lock.json ou este arquivo mudam na main (e em PR que altere este arquivo).
 on:
   workflow_dispatch:
   schedule:
@@ -11,6 +11,10 @@ on:
     branches: [main]
     paths:
       - "package-lock.json"
+      - ".github/workflows/seguranca.yml"
+  # Valida o próprio workflow quando ele muda num pull request.
+  pull_request:
+    paths:
       - ".github/workflows/seguranca.yml"
 
 permissions:
