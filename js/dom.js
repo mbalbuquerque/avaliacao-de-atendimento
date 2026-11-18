@@ -39,7 +39,7 @@ function el(tag, atributos, ...filhos) {
   return no;
 }
 
-// Troca todo o conteúdo do container pelos filhos informados.
+// Substitui o que há no container pelos filhos informados.
 function preencher(container, ...filhos) {
   container.replaceChildren();
   anexarFilhos(container, filhos);
