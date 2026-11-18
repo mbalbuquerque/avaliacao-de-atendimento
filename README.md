@@ -29,7 +29,7 @@ uma média enganosa. O gestor pode ocultar comentários impróprios sem alterar 
 | Painel (formulário, dashboard, tela do gestor) integrado à API | **Concluído**; o modo demonstração e todo o `localStorage` de avaliações foram **removidos** (#15) |
 | Implantação na Azure (Nível A) | **Implantado** em https://app-cloud-g01-en.azurewebsites.net (App Service Linux F1, Node 22 LTS, e PostgreSQL 16 Flexible Server B1ms, Brazil South); `/health` responde 200 com `database: connected`; HTTPS obrigatório; usuário do banco da aplicação com privilégios mínimos |
 | CI (lint, testes com cobertura, PostgreSQL 16 real, auditoria, CodeQL, Gitleaks, ZAP semanal) | **Em funcionamento** (seção 8) |
-| CD (deploy automático) | **Workflow pronto, mas desligado**: falta cadastrar o segredo `AZURE_WEBAPP_PUBLISH_PROFILE`, que só um administrador do repositório consegue (#18). O deploy atual foi feito manualmente |
+| CD (deploy automático) | **Workflow real, aguardando um segredo**: a cada push na `main` ele testa e, com o segredo `AZURE_WEBAPP_PUBLISH_PROFILE`, publica no App Service e confere o `/health`. Sem o segredo o job de publicação aparece como **ignorado** (nunca verde sem ter publicado). Falta um administrador do repositório cadastrar o segredo (#18); o deploy atual foi feito com `az webapp deploy` |
 | Cabeçalhos de segurança (CSP restritiva, HSTS, anti-clickjacking, COOP/CORP/COEP, Permissions-Policy), limite geral de requisições e Chart.js local | **Aplicados** (#14), com testes que leem o HTML e o JavaScript do front para provar que ele funciona sob a CSP |
 | Redesenho de todas as telas (tokens, tema claro e escuro, acessibilidade, formulários com `method="post"`) e DOM sem `innerHTML` | **Concluídos** (#22, #36) |
 | Testes ponta a ponta do painel em navegador (Playwright, Chromium) | **16 testes** (#17) contra a aplicação real, sob a CSP verdadeira, com PostgreSQL 16 real no CI: formulário, amostra insuficiente, validação, sem rede, login, moderação, sair, XSS, acessibilidade e formulários sem JavaScript |
@@ -241,8 +241,9 @@ e em [docs/seguranca.md](docs/seguranca.md).
 **CD (deploy automático):** o workflow `deploy.yml` roda a cada push na `main`, repete lint e testes e, **se
 o segredo `AZURE_WEBAPP_PUBLISH_PROFILE` existir**, publica no App Service e confere o `/health`. **Esse
 segredo ainda não foi cadastrado**: cadastrar segredo do repositório exige permissão de administrador, que
-quem implantou não tem, e o grupo precisa decidir quem o faz (issue #18). Enquanto isso o job apenas avisa e
-termina sem publicar, e o deploy da produção atual foi feito manualmente com `az webapp deploy`. Como
+quem implantou não tem, e o grupo precisa decidir quem o faz (issue #18). Enquanto isso o job "Publicar no App Service" aparece como
+**ignorado** na aba Actions, com um resumo explicando o motivo, e o deploy da produção atual foi feito manualmente
+com `az webapp deploy`. Como
 cadastrar o segredo: seção "Deploy automático" de [docs/implantacao-azure.md](docs/implantacao-azure.md).
 
 ## 9. Segurança e configuração
