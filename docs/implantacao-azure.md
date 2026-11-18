@@ -105,6 +105,20 @@ az webapp config appsettings set --name $APP --resource-group $GRUPO --settings 
 Se a senha do banco tiver caractere especial (`@`, `:`, `/`, `#`), codifique-o na URL.
 Tire um print das variáveis com o valor oculto (evidência E5).
 
+### Configurações opcionais
+
+Além das cinco obrigatórias, o app aceita ajustes opcionais nas mesmas "Configurações do aplicativo", todos com
+padrão (tabela completa no `README.md` e comentários em `.env.example`): `LIMITE_GERAL_POR_MINUTO`,
+`LIMITE_AVALIACOES_POR_MINUTO`, `LIMITE_LOGIN_TENTATIVAS`, `LIMITE_LOGIN_JANELA_MINUTOS`, `SESSAO_HORAS`,
+`TAMANHO_MAXIMO_CORPO_KB`, `COMENTARIOS_PUBLICOS_MAXIMO`, `AVALIACOES_GESTOR_MAXIMO`, `BANCO_CONEXOES_MAXIMAS`,
+`BANCO_TIMEOUT_CONEXAO_MS` e `BANCO_TIMEOUT_OCIOSO_MS`. Valor inválido derruba a subida com uma mensagem clara
+no log, para o erro aparecer no primeiro minuto e não só em produção. Exemplo:
+
+```bash
+az webapp config appsettings set --name app-cloud-g01-XX --resource-group rg-cloud-g01 \
+  --settings SESSAO_HORAS=4 LIMITE_GERAL_POR_MINUTO=300
+```
+
 ## 6. Criar as tabelas e os serviços no banco da Azure
 
 Da raiz do repositório, apontando para o banco da Azure (a variável vale só nesse comando):
@@ -211,3 +225,14 @@ Para ligar a publicação automática (quem for administrador do repositório):
 
 O perfil só vale para este app e pode ser revogado em "Redefinir perfil de publicação" no portal.
 
+### Variáveis do repositório dos workflows
+
+Os workflows `deploy.yml` e `seguranca.yml` não têm o nome do app nem a URL escritos no meio do código: leem
+**variáveis do repositório** (Settings > Secrets and variables > Actions > aba Variables; não são segredos):
+
+| Variável | Padrão se não existir | Usada por |
+|---|---|---|
+| `AZURE_WEBAPP_NAME` | `app-cloud-g01-en` | `deploy.yml` (nome do App Service) |
+| `APP_URL` | `https://<AZURE_WEBAPP_NAME>.azurewebsites.net` | `deploy.yml` (conferência do `/health`) e `seguranca.yml` (alvo do ZAP) |
+
+Se o app for recriado com outro nome, é só mudar essas variáveis, sem editar workflow.
