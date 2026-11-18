@@ -112,7 +112,8 @@
   font-weight: 800;
 }
 
-.media small {
+.servico-topo .media small {
+  display: inline;
   color: var(--estrela);
   font-size: var(--t-lg);
 }

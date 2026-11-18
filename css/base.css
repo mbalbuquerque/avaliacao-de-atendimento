@@ -61,6 +61,11 @@ a:hover {
   color: var(--primaria-hover);
 }
 
+/* O atributo hidden vence qualquer display de classe (.btn, .nav a...) */
+[hidden] {
+  display: none !important;
+}
+
 img,
 svg,
 canvas {
