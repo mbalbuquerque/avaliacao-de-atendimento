@@ -61,6 +61,19 @@ function showMessage(text, type = "error") {
   element.setAttribute("role", "status");
 }
 
+// Se o servidor não responde, o modo demonstração é uma escolha do usuário:
+// nunca liga sozinho, para dado local não passar por dado do servidor.
+function offerDemoLink() {
+  const element = $("formMessage");
+  if (!element) return;
+
+  const link = document.createElement("a");
+  link.href = "?modo=demo";
+  link.textContent = "Abrir em modo demonstração (dados só neste navegador)";
+
+  element.append(" ", link);
+}
+
 function formatAverage(value) {
   if (value === null || value === undefined) {
     return null;
@@ -668,6 +681,7 @@ async function initialize() {
       showMessage(
         "Não foi possível carregar os dados do servidor."
       );
+      offerDemoLink();
     }
 
   } else {

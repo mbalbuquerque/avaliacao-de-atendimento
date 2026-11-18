@@ -1,12 +1,14 @@
 
 /*
  * AVALIE O ATENDIMENTO
- * Moderação administrativa — modo DEMO
+ * Moderação administrativa
  *
- * Importante:
- * Esta implementação NÃO autentica administradores.
- * No modo API, a moderação fica bloqueada até que
- * exista autenticação e autorização no backend.
+ * Modo API: exige sessão do gestor criada pelo servidor (cookie HttpOnly).
+ * Lista em GET /api/admin/avaliacoes e oculta/reexibe com
+ * PATCH /api/admin/avaliacoes/:id. A nota nunca sai dos indicadores.
+ * Nenhuma senha ou token é guardado no navegador.
+ *
+ * Modo demo (só por escolha, ?modo=demo): dados locais, SEM autenticação.
  */
 
 const STORAGE_KEY =
@@ -19,11 +21,16 @@ const SERVICES = {
   4: "Laboratórios"
 };
 
+const SERVICE_IDS = Object.fromEntries(
+  Object.entries(SERVICES).map(([id, name]) => [name, Number(id)])
+);
+
 const $ = id => document.getElementById(id);
 
 const IS_DEMO =
   window.APP_CONFIG?.mode === "demo";
 
+// Lista do mais antigo para o mais novo; a tela mostra o inverso.
 let comments = [];
 
 function escapeHTML(value) {
@@ -44,6 +51,44 @@ function showMessage(message, type = "") {
   element.textContent = message;
   element.className = `admin-message ${type}`;
 }
+
+function goToLogin() {
+  window.location.replace("admin-login.html");
+}
+
+// Traduz o erro da API em texto para o gestor; 401 devolve ao login.
+function handleAPIError(error, fallback) {
+  console.error(fallback, error);
+
+  if (error.status === 401) {
+    goToLogin();
+    return;
+  }
+
+  if (error.status === 403) {
+    showMessage("Acesso administrativo não autorizado.", "error");
+    return;
+  }
+
+  if (error.status === 503) {
+    showMessage(
+      "Serviço indisponível no momento. Tente novamente em instantes.",
+      "error"
+    );
+    return;
+  }
+
+  if (error.status === 0) {
+    showMessage(error.message, "error");
+    return;
+  }
+
+  showMessage(error.message || fallback, "error");
+}
+
+/* ---------------------------------------------------------------
+   Dados: demo (localStorage)
+--------------------------------------------------------------- */
 
 function readReviews() {
   try {
@@ -69,17 +114,67 @@ function saveReviews(reviews) {
   );
 }
 
-function loadComments() {
-  const reviews = readReviews();
-
-  comments = reviews.filter(
-    item =>
-      typeof item.comment === "string" &&
-      item.comment.trim().length > 0
-  );
+function loadLocalComments() {
+  comments = readReviews()
+    .filter(
+      item =>
+        typeof item.comment === "string" &&
+        item.comment.trim().length > 0
+    );
 
   render();
 }
+
+/* ---------------------------------------------------------------
+   Dados: API
+--------------------------------------------------------------- */
+
+// Contrato do servidor -> formato interno das telas.
+function fromAPI(item) {
+  return {
+    id: item.id,
+    serviceId: SERVICE_IDS[item.servico],
+    serviceName: item.servico,
+    score: item.nota,
+    comment: item.comentario,
+    hidden: item.oculta === true
+  };
+}
+
+async function loadAPIComments() {
+  try {
+    const list = await AvalieAPI.listarAvaliacoesAdmin();
+
+    if (!Array.isArray(list)) {
+      throw new Error("Formato de avaliações inválido.");
+    }
+
+    // A API devolve do mais novo para o mais antigo.
+    comments = list
+      .map(fromAPI)
+      .filter(
+        item =>
+          typeof item.comment === "string" &&
+          item.comment.trim().length > 0
+      )
+      .reverse();
+
+    render();
+  } catch (error) {
+    handleAPIError(
+      error,
+      "Não foi possível carregar os comentários."
+    );
+  }
+}
+
+function loadComments() {
+  return IS_DEMO ? loadLocalComments() : loadAPIComments();
+}
+
+/* ---------------------------------------------------------------
+   Apresentação
+--------------------------------------------------------------- */
 
 function renderMetrics() {
   $("totalComments").textContent = comments.length;
@@ -133,7 +228,7 @@ function renderComments() {
 
   container.innerHTML = filtered.map(item => {
     const serviceName =
-      SERVICES[item.serviceId] || "Serviço";
+      item.serviceName || SERVICES[item.serviceId] || "Serviço";
 
     const score = Number(item.score);
 
@@ -191,9 +286,45 @@ function render() {
   renderComments();
 }
 
-function toggleComment(id) {
-  if (!IS_DEMO) return;
+/* ---------------------------------------------------------------
+   Moderação
+--------------------------------------------------------------- */
 
+function confirmationText(hidden) {
+  return hidden
+    ? "Comentário ocultado. A nota foi preservada."
+    : "Comentário reexibido com sucesso.";
+}
+
+async function toggleViaAPI(id) {
+  const item = comments.find(
+    comment => String(comment.id) === String(id)
+  );
+
+  if (!item) {
+    showMessage("Comentário não encontrado.", "error");
+    return;
+  }
+
+  try {
+    // Só atualiza a tela depois que o servidor confirmou (HTTP 200).
+    const result = await AvalieAPI.moderarAvaliacao(
+      item.id,
+      !item.hidden
+    );
+
+    item.hidden = result.oculta === true;
+    render();
+    showMessage(confirmationText(item.hidden), "ok");
+  } catch (error) {
+    handleAPIError(
+      error,
+      "Não foi possível salvar a alteração."
+    );
+  }
+}
+
+function toggleLocal(id) {
   const reviews = readReviews();
 
   const item = reviews.find(
@@ -214,14 +345,9 @@ function toggleComment(id) {
 
   try {
     saveReviews(reviews);
-    loadComments();
+    loadLocalComments();
 
-    showMessage(
-      nextHidden
-        ? "Comentário ocultado. A nota foi preservada."
-        : "Comentário reexibido com sucesso.",
-      "ok"
-    );
+    showMessage(confirmationText(nextHidden), "ok");
   } catch (error) {
     console.error("Erro ao salvar moderação:", error);
 
@@ -232,28 +358,32 @@ function toggleComment(id) {
   }
 }
 
-function initialize() {
-  if (!IS_DEMO) {
-    $("modeBadge").textContent =
-      "Administração indisponível";
+function toggleComment(id) {
+  return IS_DEMO ? toggleLocal(id) : toggleViaAPI(id);
+}
 
-    $("commentsList").innerHTML = `
-      <p class="empty">
-        A moderação real exige autenticação e
-        autorização no backend.
-      </p>
-    `;
+/* ---------------------------------------------------------------
+   Sessão
+--------------------------------------------------------------- */
 
-    $("refreshButton").disabled = true;
-    $("serviceFilter").disabled = true;
-    $("statusFilter").disabled = true;
+async function logout(event) {
+  event.preventDefault();
 
-    return;
+  try {
+    await AvalieAPI.sairAdmin();
+  } catch (error) {
+    // Mesmo sem resposta, volta ao login; o cookie expira sozinho.
+    console.error("Erro ao encerrar a sessão:", error);
   }
 
-  $("modeBadge").textContent = "Modo demonstração";
-  $("demoNotice").hidden = false;
+  goToLogin();
+}
 
+/* ---------------------------------------------------------------
+   Inicialização
+--------------------------------------------------------------- */
+
+function bindEvents() {
   $("serviceFilter").addEventListener(
     "change",
     renderComments
@@ -281,17 +411,58 @@ function initialize() {
       toggleComment(button.dataset.id);
     }
   );
+}
 
-  window.addEventListener(
-    "storage",
-    event => {
-      if (event.key === STORAGE_KEY) {
-        loadComments();
+async function initialize() {
+  bindEvents();
+
+  if (IS_DEMO) {
+    $("modeBadge").textContent = "Modo demonstração";
+    $("demoNotice").hidden = false;
+
+    window.addEventListener(
+      "storage",
+      event => {
+        if (event.key === STORAGE_KEY) {
+          loadLocalComments();
+        }
       }
-    }
-  );
+    );
 
-  loadComments();
+    loadLocalComments();
+    return;
+  }
+
+  $("modeBadge").textContent = "Verificando sessão...";
+  $("refreshButton").disabled = true;
+
+  try {
+    // Sem sessão válida o servidor responde 401 e a tela volta ao login.
+    const sessao = await AvalieAPI.adminMe();
+
+    $("modeBadge").textContent =
+      `Gestor: ${sessao.usuario}`;
+
+    $("refreshButton").disabled = false;
+
+    const sair = $("logoutLink");
+    sair.hidden = false;
+    sair.addEventListener("click", logout);
+
+    await loadAPIComments();
+  } catch (error) {
+    $("modeBadge").textContent = "Sem acesso";
+    $("commentsList").innerHTML = `
+      <p class="empty">
+        Não foi possível abrir a moderação.
+      </p>
+    `;
+
+    handleAPIError(
+      error,
+      "Não foi possível verificar a sessão."
+    );
+  }
 }
 
 initialize();
