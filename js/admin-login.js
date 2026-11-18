@@ -14,7 +14,6 @@ const message = document.getElementById("loginMessage");
 
 function showError(text) {
   message.textContent = text;
-  message.className = "login-message error";
 }
 
 function setLoading(active) {

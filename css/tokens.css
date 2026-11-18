@@ -1,0 +1,96 @@
+/*
+ * Tokens de design do Avalie o Atendimento.
+ * Tudo que é cor, espaçamento, tipografia e raio vem daqui; as outras folhas só
+ * usam var(--...). O tema escuro troca os valores por prefers-color-scheme.
+ * Pares de cor de texto conferidos para contraste AA (mínimo 4,5:1).
+ */
+:root {
+  color-scheme: light dark;
+
+  /* Cores (tema claro) */
+  --fundo: #f5f7fa;
+  --superficie: #ffffff;
+  --superficie-2: #eef2f7;
+  --borda: #d5dce6;
+  --borda-campo: #64748b; /* borda de campos e botões: 3:1 sobre a superfície */
+  --texto: #0f172a;
+  --texto-2: #475569;
+  --primaria: #0b5fa5;
+  --primaria-hover: #094b84;
+  --primaria-texto: #ffffff;
+  --foco: #0b5fa5;
+  --estrela: #a64b08;
+  --estrela-vazia: #64748b;
+  --ok: #166534;
+  --ok-fundo: #e7f6ec;
+  --erro: #b42318;
+  --erro-fundo: #fdecec;
+  --aviso: #8a5300;
+  --aviso-fundo: #fff4db;
+  --info: #0b4a82;
+  --info-fundo: #e8f1fb;
+  --grafico-1: #0b5fa5;
+  --grafico-2: #b45309;
+  --grafico-3: #0f766e;
+  --grafico-4: #6d28d9;
+  --sombra: 0 1px 2px rgb(15 23 42 / 8%), 0 4px 16px rgb(15 23 42 / 6%);
+
+  /* Espaçamento (escala de 4 px) */
+  --e1: 0.25rem;
+  --e2: 0.5rem;
+  --e3: 0.75rem;
+  --e4: 1rem;
+  --e5: 1.5rem;
+  --e6: 2rem;
+  --e7: 3rem;
+  --e8: 4rem;
+
+  /* Raio */
+  --r-sm: 0.5rem;
+  --r-md: 0.75rem;
+  --r-lg: 1.25rem;
+  --r-pill: 999px;
+
+  /* Tipografia: fontes do sistema, sem arquivo externo */
+  --fonte: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --t-sm: 0.875rem;
+  --t-base: 1rem;
+  --t-lg: 1.125rem;
+  --t-xl: 1.375rem;
+  --t-2xl: clamp(1.75rem, 1.2rem + 2.4vw, 2.6rem);
+
+  /* Medidas */
+  --alvo: 2.75rem; /* 44 px: tamanho mínimo de toque */
+  --largura: 72rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fundo: #0b1220;
+    --superficie: #121c30;
+    --superficie-2: #182540;
+    --borda: #2a3a57;
+    --borda-campo: #7c8ba5;
+    --texto: #e8eef8;
+    --texto-2: #a9b7ce;
+    --primaria: #7db8ff;
+    --primaria-hover: #a5cdff;
+    --primaria-texto: #0b1220;
+    --foco: #a5cdff;
+    --estrela: #f5b942;
+    --estrela-vazia: #7c8ba5;
+    --ok: #8be0a9;
+    --ok-fundo: #12301f;
+    --erro: #ff9c94;
+    --erro-fundo: #3a1717;
+    --aviso: #f5c26b;
+    --aviso-fundo: #33260a;
+    --info: #9cc9ff;
+    --info-fundo: #10294a;
+    --grafico-1: #7db8ff;
+    --grafico-2: #f5b942;
+    --grafico-3: #5eead4;
+    --grafico-4: #c4b5fd;
+    --sombra: 0 1px 2px rgb(0 0 0 / 40%), 0 4px 16px rgb(0 0 0 / 30%);
+  }
+}

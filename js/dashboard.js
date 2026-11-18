@@ -5,12 +5,21 @@
  * pelo PostgreSQL. Nada é guardado nem calculado a partir do navegador.
  */
 
-const COLORS = [
-  "#0482C2",
-  "#035680",
-  "#05ACFF",
-  "#3D3D3D"
-];
+// As cores vêm dos tokens de css/tokens.css (claro e escuro).
+function cssVar(name) {
+  return getComputedStyle(document.documentElement)
+    .getPropertyValue(name)
+    .trim();
+}
+
+function palette() {
+  return [
+    cssVar("--grafico-1"),
+    cssVar("--grafico-2"),
+    cssVar("--grafico-3"),
+    cssVar("--grafico-4")
+  ];
+}
 
 const ATUALIZAR_A_CADA_MS = 30000;
 
@@ -83,7 +92,7 @@ function setNotice(text, error = false) {
   if (!element) return;
 
   element.textContent = text;
-  element.classList.toggle("error", error);
+  element.className = `aviso ${error ? "aviso--erro" : "aviso--info"}`;
 }
 
 function renderMetrics(stats) {
@@ -125,7 +134,15 @@ function createOrUpdateChart(key, canvasId, config) {
 }
 
 function renderCharts(stats) {
+  if (typeof Chart === "undefined") return;
+
   const labels = stats.map(service => service.name);
+  const colors = palette();
+
+  // Cores de texto e grade do Chart.js seguem o tema atual.
+  Chart.defaults.color = cssVar("--texto-2");
+  Chart.defaults.borderColor = cssVar("--borda");
+  Chart.defaults.font.family = cssVar("--fonte");
 
   createOrUpdateChart("average", "averageChart", {
     type: "bar",
@@ -134,7 +151,7 @@ function renderCharts(stats) {
       datasets: [{
         label: "Média",
         data: stats.map(service => service.average),
-        backgroundColor: COLORS,
+        backgroundColor: colors,
         borderRadius: 9,
         maxBarThickness: 80
       }]
@@ -169,9 +186,9 @@ function renderCharts(stats) {
       labels,
       datasets: [{
         data: stats.map(service => service.count),
-        backgroundColor: COLORS,
+        backgroundColor: colors,
         borderWidth: 3,
-        borderColor: "#FFFFFF"
+        borderColor: cssVar("--superficie")
       }]
     },
     options: {
@@ -201,7 +218,7 @@ function renderCharts(stats) {
       datasets: [{
         label: "Avaliações",
         data: totals,
-        backgroundColor: "#0482C2",
+        backgroundColor: colors[0],
         borderRadius: 7
       }]
     },
@@ -224,12 +241,12 @@ function renderCharts(stats) {
 function renderTable(stats) {
   $("sectorTable").innerHTML = stats.map(service => `
     <tr>
-      <td><strong>${escapeHTML(service.name)}</strong></td>
+      <th scope="row">${escapeHTML(service.name)}</th>
       <td>${service.count}</td>
       <td>${formatAverage(service.average)}</td>
       <td>
-        <span class="status ${
-          service.count < 3 ? "insufficient" : ""
+        <span class="selo ${
+          service.count < 3 ? "selo--aviso" : "selo--ok"
         }">
           ${
             service.count < 3
@@ -240,6 +257,15 @@ function renderTable(stats) {
       </td>
     </tr>
   `).join("");
+
+  // Texto equivalente ao gráfico de média, para quem não enxerga o canvas.
+  $("averageSummary").textContent = stats.map(
+    service => `${service.name}: ${
+      service.average === null
+        ? "amostra insuficiente"
+        : formatAverage(service.average)
+    }`
+  ).join(" · ");
 }
 
 let lastStats = null;
@@ -278,6 +304,10 @@ async function refreshDashboard() {
 }
 
 $("serviceFilter").addEventListener("change", renderDashboard);
+
+// Troca de tema (claro/escuro) com a página aberta: redesenha os gráficos.
+window.matchMedia("(prefers-color-scheme: dark)")
+  .addEventListener("change", renderDashboard);
 $("refreshButton").addEventListener("click", refreshDashboard);
 
 setInterval(refreshDashboard, ATUALIZAR_A_CADA_MS);

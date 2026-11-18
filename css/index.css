@@ -1,0 +1,201 @@
+/* Página inicial: apresentação, formulário, painel por serviço e comentários. */
+
+.hero {
+  display: grid;
+  gap: var(--e4);
+  padding-block: var(--e6) var(--e5);
+}
+
+.hero p {
+  max-width: 40rem;
+  color: var(--texto-2);
+  font-size: var(--t-lg);
+}
+
+.hero .btn {
+  justify-self: start;
+}
+
+.grade {
+  display: grid;
+  gap: var(--e5);
+  align-items: start;
+  margin-bottom: var(--e5);
+}
+
+/* ---------------------------------------------------------------- estrelas */
+
+.estrelas {
+  position: relative;
+  display: flex;
+  gap: var(--e1);
+}
+
+/* Os botões de rádio ficam fora da vista mas continuam focáveis pelo teclado. */
+.estrelas input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.estrelas label {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--r-md);
+  color: var(--estrela-vazia);
+  cursor: pointer;
+}
+
+.estrelas label svg {
+  width: 2.1rem;
+  height: 2.1rem;
+  fill: currentColor;
+}
+
+/* Ordem natural 1 a 5 (as setas do teclado seguem a ordem visual).
+   Acendem a estrela escolhida, as anteriores a ela e as até a que está sob o mouse. */
+.estrelas input:checked + label,
+.estrelas label:has(~ input:checked),
+.estrelas label:hover,
+.estrelas label:has(~ label:hover) {
+  color: var(--estrela);
+}
+
+.estrelas input:focus-visible + label {
+  outline: 3px solid var(--foco);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------- serviços */
+
+.lista-servicos,
+.lista-comentarios {
+  display: grid;
+  gap: var(--e4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lista-servicos .vazio,
+.lista-comentarios .vazio {
+  grid-column: 1 / -1;
+}
+
+.servico {
+  padding: var(--e4);
+  border: 1px solid var(--borda);
+  border-radius: var(--r-md);
+  background: var(--superficie-2);
+}
+
+.servico-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e2);
+  margin-bottom: var(--e3);
+}
+
+.servico-topo small {
+  display: block;
+  color: var(--texto-2);
+}
+
+.media {
+  font-size: var(--t-xl);
+  font-weight: 800;
+}
+
+.servico-topo .media small {
+  display: inline;
+  color: var(--estrela);
+  font-size: var(--t-lg);
+}
+
+.distribuicao {
+  display: grid;
+  gap: var(--e1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--t-sm);
+}
+
+.distribuicao li {
+  display: grid;
+  grid-template-columns: 2.2rem 1fr 2rem;
+  align-items: center;
+  gap: var(--e2);
+}
+
+.distribuicao .quantidade {
+  text-align: right;
+  color: var(--texto-2);
+}
+
+progress.barra {
+  appearance: none;
+  width: 100%;
+  height: 0.6rem;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--borda);
+  overflow: hidden;
+}
+
+progress.barra::-webkit-progress-bar {
+  background: var(--borda);
+}
+
+progress.barra::-webkit-progress-value {
+  background: var(--primaria);
+  border-radius: var(--r-pill);
+}
+
+progress.barra::-moz-progress-bar {
+  background: var(--primaria);
+  border-radius: var(--r-pill);
+}
+
+/* ---------------------------------------------------------------- comentários */
+
+.comentario {
+  padding: var(--e4);
+  border: 1px solid var(--borda);
+  border-radius: var(--r-md);
+  background: var(--superficie-2);
+}
+
+.comentario header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e2);
+  margin-bottom: var(--e2);
+}
+
+.nota-estrelas {
+  color: var(--estrela);
+  letter-spacing: 0.1em;
+}
+
+.comentario p {
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 60rem) {
+  .grade {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .lista-comentarios {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

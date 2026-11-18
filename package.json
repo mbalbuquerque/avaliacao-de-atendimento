@@ -18,6 +18,7 @@
     "auditar": "npm audit --omit=dev --audit-level=high"
   },
   "dependencies": {
+    "chart.js": "4.6.1",
     "express": "^4.21.2",
     "pg": "^8.13.1"
   },

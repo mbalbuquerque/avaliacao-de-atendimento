@@ -30,7 +30,9 @@ function escapeHTML(value) {
 function showMessage(message, type = "") {
   const element = $("adminMessage");
   element.textContent = message;
-  element.className = `admin-message ${type}`;
+  element.className = `mensagem ${
+    type === "ok" ? "mensagem--ok" : type === "error" ? "mensagem--erro" : ""
+  }`.trim();
 }
 
 function goToLogin() {
@@ -156,8 +158,8 @@ function renderComments() {
 
   if (!filtered.length) {
     container.innerHTML = `
-      <p class="empty">
-        Nenhum comentário encontrado para os filtros.
+      <p class="vazio">
+        Nenhum comentário encontrado para os filtros escolhidos.
       </p>
     `;
     return;
@@ -166,52 +168,37 @@ function renderComments() {
   container.innerHTML = filtered.map(item => {
     const serviceName = item.serviceName || "Serviço";
 
-    const score = Number(item.score);
+    const score = Math.max(0, Math.min(5, Number(item.score) || 0));
 
-    const stars = Number.isInteger(score)
-      ? "★".repeat(Math.max(0, Math.min(5, score)))
-      : "";
-
-    const statusLabel = item.hidden
-      ? "Oculto"
-      : "Visível";
-
-    const statusClass = item.hidden
-      ? "hidden-status"
-      : "visible";
+    const hidden = item.hidden === true;
 
     return `
-      <article class="comment-card">
-        <div class="comment-top">
+      <article class="cartao-comentario${hidden ? " cartao-comentario--oculto" : ""}">
+        <header>
           <div>
             <strong>${escapeHTML(serviceName)}</strong>
-            <div class="comment-meta">
-              Nota: ${stars}
-            </div>
+            <div class="nota-estrelas" role="img"
+              aria-label="Nota ${score} de 5">${"★".repeat(score)}${"☆".repeat(5 - score)}</div>
           </div>
 
-          <span class="status ${statusClass}">
-            ${statusLabel}
+          <span class="selo ${hidden ? "selo--aviso" : "selo--ok"}">
+            ${hidden ? "Oculto" : "Visível"}
           </span>
-        </div>
+        </header>
 
-        <p class="comment-text">
-          ${escapeHTML(item.comment)}
-        </p>
+        <p>${escapeHTML(item.comment)}</p>
 
-        <div class="comment-bottom">
-          <span class="comment-meta">
-            A nota permanece nos indicadores.
-          </span>
+        <footer>
+          <span class="texto-apoio">A nota continua nos indicadores.</span>
 
           <button
             type="button"
-            class="action-button"
+            class="btn btn-secundaria"
             data-id="${escapeHTML(item.id)}"
           >
-            ${item.hidden ? "Reexibir" : "Ocultar"}
+            ${hidden ? "Reexibir" : "Ocultar"}
           </button>
-        </div>
+        </footer>
       </article>
     `;
   }).join("");
@@ -338,7 +325,7 @@ async function initialize() {
   } catch (error) {
     $("modeBadge").textContent = "Sem acesso";
     $("commentsList").innerHTML = `
-      <p class="empty">
+      <p class="vazio">
         Não foi possível abrir a moderação.
       </p>
     `;
