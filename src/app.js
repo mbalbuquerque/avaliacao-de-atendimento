@@ -273,9 +273,13 @@ function criarApp(db, opcoes = {}) {
   // ---------------------------------------------------------------- front-end
 
   // Chart.js servido pelo próprio servidor (dependência do npm, versão travada): sem CDN.
-  app.get("/vendor/chart.umd.js", (req, res) => {
-    res.sendFile(path.join(RAIZ, "node_modules", "chart.js", "dist", "chart.umd.js"), { maxAge: "1d" });
+  // Só este arquivo sai de node_modules; qualquer outro caminho em /vendor segue para o 404.
+  const arquivoChart = express.static(path.join(RAIZ, "node_modules", "chart.js", "dist"), {
+    index: false,
+    dotfiles: "deny",
+    maxAge: "1d"
   });
+  app.use("/vendor", (req, res, next) => (req.path === "/chart.umd.js" ? arquivoChart(req, res, next) : next()));
 
   // Só o que o navegador precisa: o resto da pasta (server.js, banco/, .env...) nunca é servido.
   for (const pasta of ["css", "js", "icons"]) {
