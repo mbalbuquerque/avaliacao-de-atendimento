@@ -12,15 +12,15 @@
   --superficie: #ffffff;
   --superficie-2: #f2f4f6;
   --borda: #e2e8f0;
-  --borda-campo: #cbd5e1; /* 3:1 em campos; foco reforça a ação */
+  --borda-campo: #7a8a9e; /* borda de campos e botões: 3:1 sobre a superfície */
   --texto: #0f172a;
-  --texto-2: #64748b;
+  --texto-2: #5b6a7f;
   --primaria: #0f5132;
   --primaria-hover: #0b3f27;
   --primaria-texto: #ffffff;
   --foco: #0f5132;
-  --estrela: #f59e0b;
-  --estrela-vazia: #cbd5e1;
+  --estrela: #c96a04;
+  --estrela-vazia: #7a8a9e;
   --ok: #065f46;
   --ok-fundo: #ecfdf5;
   --erro: #ba1a1a;
@@ -29,6 +29,15 @@
   --aviso-fundo: #fff1d5;
   --info: #075985;
   --info-fundo: #ecfeff;
+  /* Faixa de destaque (hero): sempre escura, nos dois temas */
+  --hero-1: #0b3f27;
+  --hero-2: #0f5132;
+  --hero-3: #1c7048;
+  --hero-texto: #f4faf6;
+  --hero-botao-fundo: #ffffff;
+  --hero-botao-texto: #0b3f27;
+  --hero-botao-fundo-hover: #e8f3ec;
+  --hero-botao-texto-hover: #083320;
   --grafico-1: #0f5132;
   --grafico-2: #d97706;
   --grafico-3: #2dd4bf;
