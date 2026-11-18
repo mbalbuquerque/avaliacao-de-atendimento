@@ -1,4 +1,4 @@
-/* global el, preencher */
+/* global el, preencher, preencherSelectServicos */
 /*
  * AVALIE O ATENDIMENTO
  * Cloud Challenge — Grupo 1
@@ -26,7 +26,9 @@ function showMessage(text, type = "erro") {
   if (!element) return;
 
   element.textContent = text;
-  element.className = `mensagem mensagem--${type === "ok" ? "ok" : "erro"}`;
+  element.className = text
+    ? `mensagem mensagem--${type === "ok" ? "ok" : "erro"}`
+    : "mensagem";
 }
 
 function formatAverage(value) {
@@ -251,6 +253,60 @@ function showLoadError() {
 }
 
 /* ==================================================
+   SERVIÇOS (vêm do servidor: nada escrito no HTML)
+================================================== */
+
+let servicesErrorShown = false;
+
+function setSubmitEnabled(enabled) {
+  const button = document.querySelector(
+    '#reviewForm button[type="submit"]'
+  );
+
+  if (button) button.disabled = !enabled;
+}
+
+async function loadServices() {
+  const select = $("service");
+  if (!select) return;
+
+  const neutral = select.options[0];
+  neutral.textContent = "Carregando serviços…";
+  setSubmitEnabled(false);
+
+  try {
+    const services = await preencherSelectServicos(
+      select,
+      service => service.id
+    );
+
+    if (services.length === 0) {
+      neutral.textContent = "Nenhum serviço disponível";
+      servicesErrorShown = true;
+      showMessage("Nenhum serviço está disponível para avaliação no momento.");
+      return;
+    }
+
+    neutral.textContent = "Selecione um serviço";
+    setSubmitEnabled(true);
+
+    // Tentativa anterior falhou e esta deu certo: tira o aviso antigo.
+    if (servicesErrorShown) {
+      servicesErrorShown = false;
+      showMessage("");
+    }
+  } catch (error) {
+    console.error("Erro ao carregar os serviços:", error);
+
+    neutral.textContent = "Serviços indisponíveis";
+    servicesErrorShown = true;
+    showMessage(
+      error.message || "Não foi possível carregar a lista de serviços."
+    );
+  }
+}
+
+/* ==================================================
    VALIDAÇÃO DO FORMULÁRIO
 ================================================== */
 
@@ -278,6 +334,14 @@ async function submitReview(event) {
   event.preventDefault();
 
   if (sending) return;
+
+  // Sem a lista de serviços do servidor não há o que avaliar: nada é enviado.
+  if ($("service").disabled) {
+    showMessage(
+      "A lista de serviços não foi carregada. Atualize a página e tente de novo."
+    );
+    return;
+  }
 
   const serviceId = Number($("service").value);
   const comment = $("comment").value.trim();
@@ -343,6 +407,9 @@ async function submitReview(event) {
 
 async function initialize() {
   updateRatingHint();
+
+  // Não espera: tem tratamento próprio de erro e não trava os indicadores.
+  loadServices();
 
   if ($("services")) {
     preencher(
