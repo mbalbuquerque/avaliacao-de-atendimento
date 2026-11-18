@@ -1,4 +1,4 @@
-/* global el, preencher */
+/* global el, preencher, preencherSelectServicos */
 
 /*
  * AVALIE O ATENDIMENTO
@@ -244,6 +244,25 @@ async function logout(event) {
 }
 
 /* ---------------------------------------------------------------
+   Filtro de serviços (vêm do servidor: nada escrito no HTML)
+--------------------------------------------------------------- */
+
+async function loadServiceFilter() {
+  try {
+    // A lista de moderação traz o nome do serviço, então o filtro usa o nome.
+    await preencherSelectServicos(
+      $("serviceFilter"),
+      service => service.nome
+    );
+  } catch (error) {
+    handleAPIError(
+      error,
+      "Não foi possível carregar a lista de serviços."
+    );
+  }
+}
+
+/* ---------------------------------------------------------------
    Inicialização
 --------------------------------------------------------------- */
 
@@ -296,7 +315,7 @@ async function initialize() {
     sair.hidden = false;
     sair.addEventListener("click", logout);
 
-    await loadAPIComments();
+    await Promise.all([loadServiceFilter(), loadAPIComments()]);
   } catch (error) {
     $("modeBadge").textContent = "Sem acesso";
     preencher(

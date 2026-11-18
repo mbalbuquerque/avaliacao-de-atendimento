@@ -22,6 +22,8 @@ const banco = {
   // Recria as tabelas e os quatro serviços (banco/schema.sql): cada teste começa do zero.
   reiniciar: () => chamarControle("POST", "/reiniciar"),
   semear: (lista) => chamarControle("POST", "/semear", lista),
+  // Acrescenta um serviço ao banco e devolve { id, nome }.
+  novoServico: (nome) => chamarControle("POST", "/servico", { nome }),
   avaliacoes: () => chamarControle("GET", "/avaliacoes"),
   total: async () => (await chamarControle("GET", "/avaliacoes")).length
 };

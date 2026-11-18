@@ -1,4 +1,4 @@
-/* global el, preencher */
+/* global el, preencher, preencherSelectServicos */
 
 /*
  * Dashboard de indicadores.
@@ -248,6 +248,23 @@ function renderTable(stats) {
 
 let lastStats = null;
 
+// O filtro por serviço é montado com os serviços da API (nada escrito no HTML).
+let filterUnavailable = false;
+
+async function loadServiceFilter() {
+  try {
+    const services = await preencherSelectServicos(
+      $("serviceFilter"),
+      service => service.id
+    );
+
+    filterUnavailable = services.length === 0;
+  } catch (error) {
+    console.error("Erro ao carregar os serviços:", error);
+    filterUnavailable = true;
+  }
+}
+
 function renderDashboard() {
   if (!lastStats) return;
 
@@ -263,11 +280,19 @@ function renderDashboard() {
 }
 
 async function refreshDashboard() {
+  // Só a primeira opção (neutra): a lista de serviços ainda não chegou, tenta de novo.
+  if ($("serviceFilter").options.length <= 1) {
+    await loadServiceFilter();
+  }
+
   try {
     lastStats = await loadStatistics();
 
     setNotice(
-      "Dados do servidor (PostgreSQL), atualizados a cada 30 segundos."
+      filterUnavailable
+        ? "Dados do servidor (PostgreSQL). O filtro por serviço está indisponível: a lista de serviços não pôde ser carregada."
+        : "Dados do servidor (PostgreSQL), atualizados a cada 30 segundos.",
+      filterUnavailable
     );
 
     renderDashboard();
