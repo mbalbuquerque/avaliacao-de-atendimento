@@ -12,13 +12,14 @@
   --superficie: #ffffff;
   --superficie-2: #eef2f7;
   --borda: #d5dce6;
+  --borda-campo: #64748b; /* borda de campos e botões: 3:1 sobre a superfície */
   --texto: #0f172a;
   --texto-2: #475569;
   --primaria: #0b5fa5;
   --primaria-hover: #094b84;
   --primaria-texto: #ffffff;
   --foco: #0b5fa5;
-  --estrela: #b45309;
+  --estrela: #a64b08;
   --estrela-vazia: #64748b;
   --ok: #166534;
   --ok-fundo: #e7f6ec;
@@ -69,6 +70,7 @@
     --superficie: #121c30;
     --superficie-2: #182540;
     --borda: #2a3a57;
+    --borda-campo: #7c8ba5;
     --texto: #e8eef8;
     --texto-2: #a9b7ce;
     --primaria: #7db8ff;
